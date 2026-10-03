@@ -36,9 +36,9 @@ In accordance with Rule 1 of release hardening, every claim is classified as:
 
 | Model Claim | Formula / Logic | Status | Where Displayed |
 |:---|:---|:---|:---|
-| Carry Cost | $FirstYear + (Term - 1) 	imes Renewal$ | COMPUTED (Arithmetic) | `/budget`, Story Slide 6 |
+| Carry Cost | $\text{FirstYear} + (\text{Term} - 1) \times \text{Renewal}$ | COMPUTED (Arithmetic) | `/budget`, Story Slide 6 |
 | Probability of Zero Sales | $P(0) = (1 - 	ext{SellThrough})^{	ext{Domains} 	imes 	ext{Years}}$ | ILLUSTRATIVE (Binomial) | `/budget`, Story Slide 6 |
-| Break-Even Net Price | $	ext{Total Spend} / 	ext{Expected Sales}$ | ILLUSTRATIVE (Arithmetic) | `/budget` |
+| Break-Even Net Price | $\text{Total Spend} / \text{Expected Sales}$ | ILLUSTRATIVE (Arithmetic) | `/budget` |
 | Sensitivity Matrix | Average outcome across combinations of sell-through and price | ILLUSTRATIVE (Arithmetic) | `/budget` |
 
 ---
