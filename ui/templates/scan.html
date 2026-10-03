@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Scan Control{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 6: Scan Controller</h1>
+    <div class="page-desc">Execute the polite research scanner with strict rate-limiting (≤1 req/sec). Concurrency guard active.</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Scan Configuration Form -->
+  <div class="card">
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Configure Scan Run</h2>
+
+    <form id="scanForm" onsubmit="event.preventDefault(); startScan();">
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.35rem;">
+          Candidates to Check (--top)
+        </label>
+        <input type="number" id="topInput" value="20" min="1" max="500" style="width: 100%;" oninput="updateTimeEstimate()">
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+          Recommended: 20–50 names for rapid feedback; 500 for deep sweep.
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.35rem;">
+          Extra Custom Candidate Names (--extra)
+        </label>
+        <input type="text" id="extraInput" placeholder="e.g. agentflow, siliconcore, neuroforge" style="width: 100%;">
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+          Comma-separated custom labels to evaluate alongside seed words.
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+          <input type="checkbox" id="skipTwins" checked>
+          Skip .com/.ai twin queries (recommended to accelerate scan speed)
+        </label>
+      </div>
+
+      <!-- Time Estimate Box -->
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Polite Execution Estimate</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent); margin-top: 0.25rem;" id="estimateText">
+          Estimated Time: ~21 seconds
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+          Enforces Registry Rule: max 1 request per second to protect registry infrastructure.
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="startScanBtn" style="width: 100%; justify-content: center;">
+        Start Polite Scan Run
+      </button>
+    </form>
+  </div>
+
+  <!-- Live Output Terminal -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Live Terminal Stream</h2>
+      <span id="scanStatusBadge" class="badge badge-reg">IDLE</span>
+    </div>
+
+    <pre id="terminalOutput" style="background: #000; border: 1px solid var(--card-border); color: #38bdf8; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.8rem; height: 380px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4;">SI Scout Scanner is ready. Configure options and click 'Start Polite Scan Run'.</pre>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateTimeEstimate() {
+  const count = parseInt(document.getElementById('topInput').value || '0', 10);
+  const seconds = Math.round(count * 1.05);
+  const mins = Math.floor(seconds / 60);
+  const remSec = seconds % 60;
+  let text = `~${seconds} seconds`;
+  if (mins > 0) text = `~${mins}m ${remSec}s`;
+  document.getElementById('estimateText').innerText = `Estimated Time: ${text}`;
+}
+
+let evtSource = null;
+
+function startScan() {
+  const top = document.getElementById('topInput').value;
+  const extra = document.getElementById('extraInput').value;
+  const skipTwins = document.getElementById('skipTwins').checked;
+  const terminal = document.getElementById('terminalOutput');
+  const btn = document.getElementById('startScanBtn');
+  const badge = document.getElementById('scanStatusBadge');
+
+  btn.disabled = true;
+  badge.className = 'badge badge-avail';
+  badge.innerText = 'RUNNING';
+  terminal.innerText = 'Launching subprocess: python si_agent.py...\n';
+
+  fetch('/api/scan/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ top: top, extra: extra, skip_twins: skipTwins })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert(data.error);
+      btn.disabled = false;
+      badge.className = 'badge badge-reg';
+      badge.innerText = 'IDLE';
+      return;
+    }
+
+    // Connect to Server-Sent Events stream
+    if (evtSource) evtSource.close();
+    evtSource = new EventSource('/api/scan/stream');
+
+    evtSource.onmessage = function(e) {
+      if (e.data === '[DONE]') {
+        evtSource.close();
+        btn.disabled = false;
+        badge.className = 'badge badge-reg';
+        badge.innerText = 'FINISHED';
+        terminal.innerText += '\n[FINISHED] Scan completed successfully. Visit Candidates Explorer to view updated results.\n';
+      } else {
+        terminal.innerText += e.data + '\n';
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+    };
+
+    evtSource.onerror = function() {
+      evtSource.close();
+      btn.disabled = false;
+      badge.className = 'badge badge-reg';
+      badge.innerText = 'DISCONNECTED';
+    };
+  })
+  .catch(err => {
+    alert('Error initiating scan: ' + err);
+    btn.disabled = false;
+  });
+}
+</script>
+{% endblock %}

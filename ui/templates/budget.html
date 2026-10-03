@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Lab — Interactive Holding Cost Simulator{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--accent-primary);">
+  <div class="card-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <h1 class="card-title" style="font-size: 1.65rem;">Budget Lab</h1>
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary); border-color: var(--accent-primary);">
+          Interactive Simulator
+        </span>
+      </div>
+      <p class="card-subtitle">Deterministic carry cost modeling and illiquidity arithmetic under multi-year holding horizons.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <button id="copyBtn" class="theme-toggle-btn" title="Copy text summary to clipboard">
+        📋 Copy Summary
+      </button>
+      <button id="csvBtn" class="theme-toggle-btn" title="Download sensitivity matrix CSV">
+        📥 Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Honest Framing Notice -->
+  <div style="background: var(--accent-surface); border-left: 4px solid var(--accent-primary); padding: 0.85rem 1.25rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.88rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <div>
+      <strong>Honest Framing:</strong> Illustrative arithmetic from your inputs, not a forecast. Secondary sales in country-code extensions like .si are infrequent and carry no liquid secondary market.
+    </div>
+    <span id="copyFeedback" style="color: var(--status-positive); font-weight: 700; font-family: var(--font-mono);"></span>
+  </div>
+
+  <!-- Quick Scenario Chips -->
+  <div style="margin-bottom: 1.25rem;">
+    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 0.4rem;">
+      Quick Scenarios:
+    </div>
+    <div class="preset-chips-row">
+      <button class="chip-btn" data-budget="100" data-term="2" data-st="1.5" data-price="350">
+        ⚡ $100 Lean (2-Yr, 1.5% ST)
+      </button>
+      <button class="chip-btn active" data-budget="200" data-term="3" data-st="2.0" data-price="500">
+        🎯 $200 Baseline (3-Yr, 2.0% ST)
+      </button>
+      <button class="chip-btn" data-budget="500" data-term="5" data-st="2.5" data-price="750">
+        🏛️ $500 Patient (5-Yr, 2.5% ST)
+      </button>
+      <button class="chip-btn" data-budget="1000" data-term="3" data-st="3.0" data-price="1000">
+        🚀 $1,000 Portfolio (3-Yr, 3.0% ST)
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Inputs Grid -->
+  <div class="budget-controls">
+    <div class="input-group">
+      <label class="input-label" for="budgetInput">Total Budget Cap</label>
+      <input type="number" id="budgetInput" class="input-field" value="200" min="0" step="10">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="currencySelect">Currency</label>
+      <select id="currencySelect" class="input-field">
+        <option value="EUR" selected>EUR (€)</option>
+        <option value="USD">USD ($)</option>
+      </select>
+    </div>
+
+    <div class="input-group" id="fxGroup" style="display: none;">
+      <label class="input-label" for="fxInput">User FX Rate (USD/EUR)</label>
+      <input type="number" id="fxInput" class="input-field" value="1.08" min="0.01" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="reserveInput">Reserve Buffer (%)</label>
+      <input type="number" id="reserveInput" class="input-field" value="0" min="0" max="90" step="5">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="presetSelect">Registrar Snapshot Preset</label>
+      <select id="presetSelect" class="input-field">
+        <option value="dynadot" selected>Dynadot (Dated snapshot: 2026-09-30)</option>
+        <option value="hostinger">Hostinger (Dated snapshot: 2026-09-30)</option>
+        <option value="domovanje">Domovanje (Dated snapshot: 2026-09-30)</option>
+        <option value="custom">Custom Values</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="firstYearInput">First-Year Price</label>
+      <input type="number" id="firstYearInput" class="input-field" value="12.13" min="0" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="renewalInput">Annual Renewal Price</label>
+      <input type="number" id="renewalInput" class="input-field" value="13.61" min="0" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="taxInput">Tax / VAT (%)</label>
+      <input type="number" id="taxInput" class="input-field" value="0" min="0" max="100" step="1">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="salePriceInput">Assumed Net Sale Price</label>
+      <input type="number" id="salePriceInput" class="input-field" value="500" min="0" step="25">
+    </div>
+  </div>
+
+  <!-- Sliders Row with Glass Container -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; background: var(--bg-surface-elevated); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+    <div class="input-group">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <label class="input-label" for="termSlider">Holding Term</label>
+        <span id="termDisplay" class="brand-badge" style="background: var(--bg-canvas); color: var(--accent-primary); border-color: var(--border-strong);">3 year(s)</span>
+      </div>
+      <input type="range" id="termSlider" class="range-slider" min="1" max="5" value="3" step="1">
+      <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-faint); margin-top: 0.35rem;">
+        <span>1 Yr</span><span>2 Yr</span><span>3 Yr</span><span>4 Yr</span><span>5 Yr</span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <label class="input-label" for="domainSlider">Portfolio Size (Names)</label>
+        <span id="domainDisplay" class="brand-badge" style="background: var(--bg-canvas); color: var(--accent-primary); border-color: var(--border-strong);">5 name(s)</span>
+      </div>
+      <input type="range" id="domainSlider" class="range-slider" min="0" max="5" value="5" step="1">
+      <div id="domainMaxHint" style="font-size: 0.75rem; color: var(--text-faint); margin-top: 0.35rem; font-family: var(--font-mono);">
+        Max affordable: 5 names
+      </div>
+    </div>
+
+    <div class="input-group">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <label class="input-label" for="sellThroughSlider">Annual Sell-Through (%)</label>
+        <span id="sellThroughDisplay" class="brand-badge" style="background: var(--bg-canvas); color: var(--accent-primary); border-color: var(--border-strong);">2.0%</span>
+      </div>
+      <input type="range" id="sellThroughSlider" class="range-slider" min="0.0" max="10.0" value="2.0" step="0.5">
+      <div style="font-size: 0.75rem; color: var(--text-faint); margin-top: 0.35rem;">
+        Guides cite 1-3% for .com; .si secondary rate is undocumented
+      </div>
+    </div>
+  </div>
+
+  <!-- Stacked Budget Allocation Bar -->
+  <div class="budget-bar-container">
+    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem;">
+      <span style="text-transform: uppercase; letter-spacing: 0.04em;">Budget Allocation Breakdown</span>
+      <span id="totalSpendSummary" style="font-family: var(--font-mono);"></span>
+    </div>
+    <div class="budget-bar-track">
+      <div id="barSpend" class="budget-bar-spend" style="width: 98.4%;" title="Carry Spend"></div>
+      <div id="barReserve" class="budget-bar-reserve" style="width: 0%;" title="Reserve Buffer"></div>
+      <div id="barLeftover" class="budget-bar-leftover" style="width: 1.6%;" title="Leftover Unspent"></div>
+    </div>
+    <div class="budget-bar-legend">
+      <span><span class="legend-dot" style="background: var(--accent-primary);"></span><span id="legendSpend">Carry Spend: €196.75</span></span>
+      <span><span class="legend-dot" style="background: var(--status-caution);"></span><span id="legendReserve">Reserve: €0.00</span></span>
+      <span><span class="legend-dot" style="background: var(--status-neutral); opacity: 0.5;"></span><span id="legendLeftover">Leftover: €3.25</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Primary Arithmetic Outputs (Headline Failure Rate First!) -->
+<div class="grid-3">
+  <div class="metric-tile" style="border-top: 4px solid var(--status-negative); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.08);">
+    <div class="metric-label">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-negative);"></span>
+      Chance of Selling NOTHING
+    </div>
+    <div id="pZeroDisplay" class="metric-value" style="color: var(--status-negative);">73.9%</div>
+    <div class="metric-sub">Probability of zero sales over holding term</div>
+  </div>
+
+  <div class="metric-tile" style="border-top: 4px solid var(--accent-primary); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);">
+    <div class="metric-label">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-primary);"></span>
+      Chance of &ge; 1 Sale
+    </div>
+    <div id="pOneDisplay" class="metric-value" style="color: var(--accent-primary);">26.1%</div>
+    <div class="metric-sub">Expected sales count: <span id="expSalesDisplay" style="font-weight: 700;">0.30 sales</span></div>
+  </div>
+
+  <div class="metric-tile" style="border-top: 4px solid var(--status-caution); box-shadow: 0 4px 12px rgba(217, 119, 6, 0.08);">
+    <div class="metric-label">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-caution);"></span>
+      Expected Net Outcome
+    </div>
+    <div id="expNetDisplay" class="metric-value">-€46.75 (loss)</div>
+    <div class="metric-sub">Break-even: <span id="breakEvenDisplay" style="font-weight: 700;">€655.83 / sale</span></div>
+  </div>
+</div>
+
+<div class="grid-3" style="margin-top: -0.5rem; margin-bottom: 1.5rem;">
+  <div class="metric-tile">
+    <div class="metric-label">Carry Cost Per Domain</div>
+    <div id="carryCostDisplay" class="metric-value" style="font-size: 1.65rem;">€39.35</div>
+    <div class="metric-sub">Registration + renewals over term</div>
+  </div>
+
+  <div class="metric-tile">
+    <div class="metric-label">Total Portfolio Spend</div>
+    <div id="totalSpendDisplay" class="metric-value" style="font-size: 1.65rem;">€196.75</div>
+    <div class="metric-sub">Total committed carry costs</div>
+  </div>
+
+  <div class="metric-tile">
+    <div class="metric-label">Leftover Cash</div>
+    <div id="leftoverDisplay" class="metric-value" style="font-size: 1.65rem;">€3.25</div>
+    <div class="metric-sub">Unallocated budget buffer</div>
+  </div>
+</div>
+
+<!-- Plain Language Callout -->
+<div class="summary-callout">
+  <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 0.35rem;">
+    Calculated Summary
+  </div>
+  <p id="summarySentence" style="margin: 0; font-size: 1.05rem; line-height: 1.55; font-weight: 500;">
+    Illustrative arithmetic from your inputs, not a forecast: Over 3 year(s) with 5 name(s) at an assumed 2.0% annual sell-through, there is a 73.9% chance of selling zero names (26.1% chance of 1 or more sales), yielding an illustrative net loss of €46.75.
+  </p>
+</div>
+
+<!-- Sensitivity Matrix Heatmap -->
+<div class="card" style="margin-top: 2rem;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Interactive Sensitivity Matrix: Net Profit / Loss</h2>
+      <p class="card-subtitle">Rows = Annual sell-through rate; Columns = Net realized price per sale. Click any cell to lock that scenario.</p>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">
+      Click cell to lock scenario &bull; Loss &rarr; Even &rarr; Gain
+    </div>
+  </div>
+
+  <div id="heatmapContainer" class="heatmap-container">
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Averages across many hypothetical portfolios. Most individual outcomes are a loss of the carry cost.</p>
+    <!-- Generated dynamically by budget_lab.js -->
+  </div>
+
+  <div class="source-footer" style="margin-top: 1rem;">
+    Registrar snapshots dated 2026-09-30 (from si_scout/registrars.yaml). All equations execute client-side via ui/static/js/budget_math.js.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/budget_lab.js') }}"></script>
+{% endblock %}

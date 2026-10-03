@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Registrar Calibration & Discrepancy Workbench
+  </h1>
+  <div style="color: var(--text-muted); font-size: 0.95rem;">
+    Rigorous empirical comparison of authoritative Register.si RDAP responses vs manual registrar checkout availability.
+  </div>
+</div>
+
+<!-- Warning Banner if < 10 comparisons -->
+{% if stats.is_fewer_than_10 %}
+<div class="card" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-border); color: #fca5a5; margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+  <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <span style="font-size: 1.5rem;">&#9888;</span>
+    <div>
+      <strong style="color: #f87171; font-size: 1rem;">Calibration Warning: Fewer Than 10 Comparisons Recorded ({{ stats.total_count }}/10)</strong>
+      <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.25rem;">
+        The current agreement rate ({{ stats.agreement_rate }}%) is strictly preliminary and not statistically significant. At least 10 human checkout comparisons are required to establish empirical reliability.
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stats Cards -->
+<div class="grid-4" style="margin-bottom: 1.5rem;">
+  <div class="card" style="margin-bottom: 0; padding: 1rem;">
+    <div class="stat-label">Total Comparisons</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary);">{{ stats.total_count }}</div>
+    <div class="stat-sub">Manual checkout checks</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 1rem;">
+    <div class="stat-label">Agreement Count</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: #4ade80;">{{ stats.agrees_count }}</div>
+    <div class="stat-sub">Registry & registrar match</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 1rem;">
+    <div class="stat-label">Disagreement Count</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: #f87171;">{{ stats.disagrees_count }}</div>
+    <div class="stat-sub">Discrepant results</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 1rem;">
+    <div class="stat-label">Agreement Rate</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: {% if stats.agreement_rate >= 80 %}#4ade80{% else %}#fbbf24{% endif %};">
+      {{ stats.agreement_rate }}%
+    </div>
+    <div class="stat-sub">{% if stats.total_count < 10 %}Agreement rate (small sample){% else %}Agreement rate{% endif %}</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom: 2rem;">
+  <!-- Left: Add Comparison Form -->
+  <div class="card" style="margin-bottom: 0;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+      Record Manual Checkout Comparison
+    </h2>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+      Verify the domain manually at a registrar checkout page. <em>Never automate registrar checkout pages or scrape results.</em>
+    </div>
+
+    <form id="calForm" onsubmit="submitCalibration(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div>
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Domain Name (.si):</label>
+        <input type="text" id="calDomain" required placeholder="e.g. example-cloud.si" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Registry Initial Check UTC:</label>
+          <input type="text" id="calRegTime" required placeholder="YYYY-MM-DDTHH:MM:SSZ" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Registry Re-check UTC (optional):</label>
+          <input type="text" id="calRegRecheckTime" placeholder="YYYY-MM-DDTHH:MM:SSZ or UNKNOWN" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Registrar Name:</label>
+          <input type="text" id="calRegistrarName" required placeholder="e.g. Hostinger, Dynadot" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Registrar Checkout Result:</label>
+          <select id="calRegistrarResult" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+            <option value="available">available (proceeds to cart)</option>
+            <option value="already taken">already taken / registered</option>
+            <option value="premium">premium pricing</option>
+            <option value="error">checkout error</option>
+            <option value="registry busy / could not confirm">registry busy / could not confirm</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+          <label style="font-size: 0.8rem; color: var(--text-muted);">Registrar Attempt UTC (or "unknown"):</label>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" onclick="setRegistrarTimeNow()" style="background: none; border: none; color: #38bdf8; font-size: 0.72rem; cursor: pointer; text-decoration: underline;">Use Current Time</button>
+            <span style="color: var(--text-muted); font-size: 0.72rem;">|</span>
+            <button type="button" onclick="setRegistrarTimeUnknown()" style="background: none; border: none; color: #fbbf24; font-size: 0.72rem; cursor: pointer; text-decoration: underline;">Mark UNKNOWN</button>
+          </div>
+        </div>
+        <input type="text" id="calRegistrarTime" required placeholder="YYYY-MM-DDTHH:MM:SSZ or unknown" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+        <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.2rem;">Accepts ISO timestamp or "unknown" if the exact registrar checkout time was unrecorded.</small>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Notes / Evidence:</label>
+        <input type="text" id="calNotes" placeholder="e.g. human-reported at Hostinger cart checkout" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+      </div>
+
+      <div style="margin-top: 0.5rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+          <input type="checkbox" id="calConfirmHuman" required>
+          I confirm I checked this checkout page myself as a human author.
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;" id="submitCalBtn">
+        Record Calibration Entry
+      </button>
+      <div id="calStatus" style="font-size: 0.85rem; margin-top: 0.25rem;"></div>
+    </form>
+  </div>
+
+  <!-- Right: Calibration Protocol Rules -->
+  <div class="card" style="margin-bottom: 0;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+      Calibration Protocol & Safeguards
+    </h2>
+    <ul style="color: var(--text-muted); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem; margin-left: 1.25rem; margin-top: 0.5rem;">
+      <li>
+        <strong style="color: var(--text-primary);">RDAP 404 &ne; Registrable:</strong> Register.si RDAP returning 404 indicates only that the object is not currently indexed in the active public database. Registrars may hold lock records, internal reservation lists, or encounter EPP registry rate limits.
+      </li>
+      <li>
+        <strong style="color: var(--text-primary);">Gate 6 Requirement:</strong> Before any candidate can pass into <code>BUY_CANDIDATE</code>, a human must manually attempt checkout at an accredited registrar and log the verified result.
+      </li>
+      <li>
+        <strong style="color: var(--text-primary);">Registry Busy / Could Not Confirm:</strong> If the registrar reports a temporary registry timeout or busy state, the gate strictly <strong>FAILS</strong>, the attempt timestamp is logged, and unlimited subsequent retries are permitted.
+      </li>
+      <li>
+        <strong style="color: var(--text-primary);">Zero Automation Rule:</strong> Automated headless browser checkout or scraping of registrar search APIs is strictly prohibited to respect terms of service and avoid rate-blocking.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Comparison Table -->
+<div class="card">
+  <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Recorded Comparisons Table
+  </h2>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+    Audit trail of empirical checks showing agreement or discrepancy between Register.si and retail registrars.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Domain</th>
+        <th>Registry Initial Check</th>
+        <th>Registry Re-check</th>
+        <th>Registrar Finding</th>
+        <th>Delta (min)</th>
+        <th>Outcome</th>
+        <th>Author / Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in stats.records %}
+      <tr>
+        <td><code>#{{ r.id }}</code></td>
+        <td><strong>{{ r.domain }}</strong></td>
+        <td>
+          <span class="badge badge-avail">{{ r.registry_status }}</span><br>
+          <small style="color: var(--text-muted);">{{ r.registry_time_utc[:19] }}Z</small>
+        </td>
+        <td>
+          {% if r.registry_recheck_time and r.registry_recheck_time != 'UNKNOWN' %}
+            <span style="font-family: monospace; font-size: 0.8rem; color: #cbd5e1;">{{ r.registry_recheck_time[:19] }}Z</span>
+          {% else %}
+            <span class="badge badge-uncertain" style="font-size: 0.7rem; padding: 0.1rem 0.35rem;">UNKNOWN</span>
+          {% endif %}
+        </td>
+        <td>
+          <strong>{{ r.registrar_name }}</strong>: 
+          {% if r.registrar_result == 'available' %}
+            <span class="badge badge-avail">available</span>
+          {% elif 'busy' in r.registrar_result %}
+            <span class="badge badge-uncertain">{{ r.registrar_result }}</span>
+          {% else %}
+            <span class="badge badge-reg">{{ r.registrar_result }}</span>
+          {% endif %}
+          <br>
+          <small style="color: var(--text-muted);">
+            {% if r.registrar_time_utc == 'UNKNOWN' or not r.registrar_time_utc or r.registrar_time_utc|lower == 'unknown' %}
+              <span class="badge badge-uncertain" style="font-size: 0.7rem; padding: 0.1rem 0.35rem; font-weight: 700;">UNKNOWN</span>
+            {% else %}
+              {{ r.registrar_time_utc[:19] }}Z
+            {% endif %}
+          </small>
+        </td>
+        <td>
+          {% if r.delta_minutes is defined and r.delta_minutes != 'UNKNOWN' and r.delta_minutes is not none %}
+            <span style="font-family: monospace; font-size: 0.85rem; color: #38bdf8; font-weight: 600;">{{ r.delta_minutes }} min</span>
+          {% else %}
+            <span class="badge badge-uncertain" style="font-size: 0.7rem; padding: 0.1rem 0.35rem;">UNKNOWN</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.agrees %}
+            <span style="color: #4ade80; font-weight: 700;">&#10003; AGREE</span>
+          {% elif 'busy' in r.registrar_result %}
+            <span style="color: #fbbf24; font-weight: 700;">&#9888; BUSY (RETRY ALLOWED)</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; DISAGREE</span>
+          {% endif %}
+        </td>
+        <td>
+          <code><small>{{ r.author }}</small></code><br>
+          <small style="color: var(--text-muted);">{{ r.notes }}</small>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+          No calibration records logged yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const nowUtc = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const regTimeInput = document.getElementById('calRegTime');
+  const regisTimeInput = document.getElementById('calRegistrarTime');
+  if (regTimeInput && !regTimeInput.value) regTimeInput.value = nowUtc;
+});
+
+function setRegistrarTimeNow() {
+  const nowUtc = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  document.getElementById('calRegistrarTime').value = nowUtc;
+}
+
+function setRegistrarTimeUnknown() {
+  document.getElementById('calRegistrarTime').value = 'UNKNOWN';
+}
+
+function submitCalibration(e) {
+  e.preventDefault();
+  const domain = document.getElementById('calDomain').value.trim();
+  const registry_status = document.getElementById('calRegStatus').value.trim();
+  const registry_time_utc = document.getElementById('calRegTime').value.trim();
+  const registry_recheck_time = (document.getElementById('calRegRecheckTime').value || '').trim() || 'UNKNOWN';
+  const registrar_name = document.getElementById('calRegistrarName').value.trim();
+  const registrar_result = document.getElementById('calRegistrarResult').value;
+  let registrar_time_utc = document.getElementById('calRegistrarTime').value.trim();
+  if (registrar_time_utc.toLowerCase() === 'unknown') {
+    registrar_time_utc = 'UNKNOWN';
+  }
+  const notes = document.getElementById('calNotes').value.trim();
+  const statusEl = document.getElementById('calStatus');
+
+  statusEl.innerHTML = '<span style="color: var(--text-muted);">Submitting manual calibration entry...</span>';
+
+  fetch('/api/calibration/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      domain,
+      registry_status,
+      registry_time_utc,
+      registry_recheck_time,
+      registrar_name,
+      registrar_result,
+      registrar_time_utc,
+      notes
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      statusEl.innerHTML = '<span style="color: #4ade80;">&#10003; Calibration entry recorded successfully. Reloading...</span>';
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      statusEl.innerHTML = '<span style="color: #f87171;">&#10007; ' + (data.error || 'Submission failed') + '</span>';
+    }
+  })
+  .catch(err => {
+    statusEl.innerHTML = '<span style="color: #f87171;">&#10007; Network error recording calibration entry.</span>';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,3 @@
+timestamp_utc,domain,old_status,new_status,http_status,raw_rdap_status,event_type,notes,source
+2026-09-29T10:27:06Z,demo-cortex.si,REGISTERED,QUARANTINE/PENDING_DELETE,200,pending delete,STATUS_CHANGE,Demo status change,synthetic_demo
+2026-09-30T10:00:00Z,example-cloud.si,UNKNOWN,AVAILABLE_CANDIDATE,404,not_found,ROUTINE_CHECK,Demo routine scan,synthetic_demo

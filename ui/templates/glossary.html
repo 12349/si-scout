@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Glossary & Limitations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 8: Plain-Language Glossary & Limitations</h1>
+    <div class="page-desc">Terminology explained for non-programmers, compliance mandates, and the complete reality audit.</div>
+  </div>
+</div>
+
+<!-- Plain-Language Glossary -->
+<div class="card">
+  <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Plain-Language Domain Glossary</h2>
+
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; font-size: 0.85rem;">
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">RDAP (Registration Data Access Protocol)</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        The modern standard replacement for WHOIS. An authoritative registry query directly to <code>rdap.register.si</code>. An HTTP 404 response confirms the name is not currently registered.
+      </p>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">Quarantine / Pending Delete</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        When a <code>.si</code> domain expires, it enters a mandatory 30-day quarantine. The original owner can renew it during this window. If abandoned, it drops into public availability after day 30.
+      </p>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">Twin Signals (.com and .ai)</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        Checking whether the identical name exists on <code>.com</code> or <code>.ai</code>. If the <code>.com</code> has an active AI product, it proves market interest but poses a severe trademark risk.
+      </p>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">NIS2 & Real Identity Requirement</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        European Union and Slovenian regulations prohibit fake WHOIS data or anonymizing privacy proxies for <code>.si</code>. Using inaccurate contact details will result in registry-wide suspension across all domains.
+      </p>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">ARDS (Alternative Dispute Resolution)</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        Register.si's dispute tribunal. If you register a trademark or well-known public figure, the legitimate owner can file an ARDS dispute and seize the domain without compensation.
+      </p>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 6px;">
+      <h3 style="color: var(--accent); margin-bottom: 0.25rem;">16-Day Refund Window Rule</h3>
+      <p style="color: var(--text-muted); line-height: 1.4;">
+        Register.si permits registration fee refunds within 16 days <strong>only if the domain has not been activated</strong>. Configuring nameservers or DNS records immediately counts as activation and voids the refund.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Verbatim LIMITATIONS.md -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Verbatim LIMITATIONS.md Reality Audit</h2>
+    <span class="badge badge-reserved">SKEPTIC REVIEW</span>
+  </div>
+
+  <div style="background: #000; padding: 1.5rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap; font-family: monospace;">{{ limitations_text }}</div>
+</div>
+{% endblock %}

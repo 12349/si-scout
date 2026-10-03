@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Overview: Reality Check — SI Scout{% endblock %}
+
+{% block content %}
+<div class="hero-box">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.25rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-positive); box-shadow: 0 0 8px var(--status-positive);"></span>
+        <span style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint);">
+          Demo snapshot (synthetic data) &bull; Offline
+        </span>
+      </div>
+      <h1 class="hero-title">Overview: Reality Check for .si Domains</h1>
+      <p class="hero-slogan">Most outcomes in this kind of portfolio lose money. Here is how to look at the numbers.</p>
+    </div>
+    {% if is_demo %}
+    <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary); border-color: var(--accent-primary); padding: 0.35rem 0.85rem; font-size: 0.75rem;">
+      Demo Data Snapshot
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Three Live Computed Metrics Console -->
+  <div class="grid-3" style="margin-top: 1.5rem;">
+    <div class="metric-tile" style="border-left: 4px solid var(--border-strong);">
+      <div class="metric-label">
+        <span>1. Candidates Screened</span>
+      </div>
+      <div class="metric-value">{{ stats.candidates_screened }}</div>
+      <div class="metric-sub">Generated lexical candidates evaluated</div>
+      <div class="source-footer">Source: {{ stats.source_file }} ({{ stats.source_date }})</div>
+    </div>
+
+    <div class="metric-tile" style="border-left: 4px solid var(--status-caution);">
+      <div class="metric-label">
+        <span>2. Share Already Registered</span>
+      </div>
+      <div class="metric-value" style="color: var(--status-caution);">{{ stats.share_registered_pct }}%</div>
+      <div class="metric-sub">{{ stats.registered_count }} of {{ stats.checked_count }} checked names taken in registry</div>
+      <div class="source-footer">Source: {{ stats.source_file }} ({{ stats.source_date }})</div>
+    </div>
+
+    <div class="metric-tile" style="border-left: 4px solid var(--status-positive);">
+      <div class="metric-label">
+        <span>3. Not In Registry (Unconfirmed)</span>
+      </div>
+      <div class="metric-value" style="color: var(--status-positive);">{{ stats.share_unconfirmed_pct }}%</div>
+      <div class="metric-sub">{{ stats.unconfirmed_count }} returned 404; zero verified available at checkout</div>
+      <div class="source-footer">Source: {{ stats.source_file }} ({{ stats.source_date }})</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two Big Interactive Entry Cards -->
+<div class="grid-2">
+  <div class="card" style="border-top: 4px solid var(--accent-primary); display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.5rem;">📊</span>
+          <div>
+            <h2 class="card-title">1. Budget Lab</h2>
+            <div style="font-size: 0.8rem; color: var(--text-faint);">Carry Cost & Illiquidity Calculator</div>
+          </div>
+        </div>
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary);">Interactive</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.6;">
+        Model multi-year carrying costs and illiquidity realities. Test custom holding terms (1–5 years), see the animated spend bar, and explore the sell-through sensitivity heatmap.
+      </p>
+      <div style="background: var(--bg-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--border-subtle);">
+        Baseline: 5 names held 3 yrs at 2% sell-through &rarr; <strong style="color: var(--status-negative);">73.9% chance of selling zero</strong>.
+      </div>
+    </div>
+    <div>
+      <a href="/budget" class="nav-item" style="display: inline-block; background: var(--accent-primary); color: #ffffff; padding: 0.65rem 1.35rem; font-weight: 700; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); text-decoration: none;">
+        Launch Budget Lab &rarr;
+      </a>
+    </div>
+  </div>
+
+  <div class="card" style="border-top: 4px solid var(--status-positive); display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.5rem;">🔬</span>
+          <div>
+            <h2 class="card-title">2. Name Lab</h2>
+            <div style="font-size: 0.8rem; color: var(--text-faint);">Instant Offline Heuristic Screener</div>
+          </div>
+        </div>
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--status-positive);">100% Offline</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.6;">
+        Type any domain label to run real-time lexical analysis: Register.si syntax rules, consonant clusters, vowel balance, and trademark blocklist collisions without network lookups.
+      </p>
+      <div style="background: var(--bg-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--border-subtle);">
+        Offline heuristic only: <strong>Not checked against registry. Availability unconfirmed.</strong>
+      </div>
+    </div>
+    <div>
+      <a href="/name-lab" class="nav-item" style="display: inline-block; background: var(--bg-surface-elevated); border: 1px solid var(--border-strong); color: var(--text-primary); padding: 0.65rem 1.35rem; font-weight: 700; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); text-decoration: none;">
+        Launch Name Lab &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Module Hub -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Research Workbench Modules</h3>
+      <p class="card-subtitle">Evidence-first modules configured for auditability and zero external telemetry.</p>
+    </div>
+    <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">8 Integrated Screens</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+    <a href="/funnel" style="padding: 1.1rem; background: var(--bg-subtle); border-radius: var(--radius-md); text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-subtle); transition: transform 0.15s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <strong style="color: var(--accent-primary);">Funnel & Saturation</strong>
+        <span style="font-size: 0.75rem; color: var(--text-faint);">&rarr;</span>
+      </div>
+      <div style="font-size: 0.825rem; color: var(--text-muted);">Inspect 100 candidate names dropping to 4 strict survivors through 5 sequential filter stages.</div>
+    </a>
+    <a href="/gates" style="padding: 1.1rem; background: var(--bg-subtle); border-radius: var(--radius-md); text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-subtle); transition: transform 0.15s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <strong style="color: var(--accent-primary);">Gate Simulator</strong>
+        <span style="font-size: 0.75rem; color: var(--text-faint);">&rarr;</span>
+      </div>
+      <div style="font-size: 0.825rem; color: var(--text-muted);">Interactive hardware-style toggles for all 6 non-negotiable verification gates before human purchase decisions.</div>
+    </a>
+    <a href="/calibration" style="padding: 1.1rem; background: var(--bg-subtle); border-radius: var(--radius-md); text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-subtle); transition: transform 0.15s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <strong style="color: var(--accent-primary);">Calibration Table</strong>
+        <span style="font-size: 0.75rem; color: var(--text-faint);">&rarr;</span>
+      </div>
+      <div style="font-size: 0.825rem; color: var(--text-muted);">Compare Register.si 404 registry responses against real registrar checkout availability.</div>
+    </a>
+    <a href="/story" style="padding: 1.1rem; background: var(--accent-surface); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); text-decoration: none; color: inherit; display: block; transition: transform 0.15s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <strong style="color: var(--accent-primary);">Story Mode Deck (55s)</strong>
+        <span class="brand-badge" style="background: var(--accent-primary); color: #fff; font-size: 0.65rem;">Recording Mode</span>
+      </div>
+      <div style="font-size: 0.825rem; color: var(--text-muted);">Cinematic auto-advancing slide sequence with aspect ratio controls for video capture.</div>
+    </a>
+  </div>
+</div>
+{% endblock %}

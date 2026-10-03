@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - {{ detail.domain }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+      <a href="/candidates" style="color: var(--accent); text-decoration: none;">&larr; Back to Candidates Table</a>
+    </div>
+    <h1 class="page-title" style="display: flex; align-items: center; gap: 1rem;">
+      {{ detail.domain }}
+      {% if detail.rdap_status == 'AVAILABLE_CANDIDATE' %}
+        <span class="badge badge-avail">NOT IN REGISTRY (unconfirmed)</span>
+      {% elif detail.rdap_status == 'REGISTERED' %}
+        <span class="badge badge-reg">REGISTERED</span>
+      {% elif 'QUARANTINE' in detail.rdap_status %}
+        <span class="badge badge-quarantine">QUARANTINE</span>
+      {% elif detail.rdap_status == 'RESERVED' %}
+        <span class="badge badge-reserved">RESERVED</span>
+      {% else %}
+        <span class="badge badge-uncertain">{{ detail.rdap_status }}</span>
+      {% endif %}
+    </h1>
+    <div class="page-desc">
+      Authoritative Registry Check: <code>{{ detail.checked_utc }}</code> &bull; Source: <code>rdap.register.si</code>
+    </div>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <button onclick="recheckCandidate('{{ detail.domain }}')" class="btn btn-outline" id="recheckBtn">
+      Re-check Registry Now
+    </button>
+    <button onclick="toggleShortlist('{{ detail.domain }}')" class="btn {% if detail.is_shortlisted %}btn-primary{% else %}btn-outline{% endif %}" id="shortlistBtn">
+      {% if detail.is_shortlisted %}★ Shortlisted{% else %}☆ Add to Shortlist{% endif %}
+    </button>
+  </div>
+</div>
+
+<!-- Freshness Warning Banner (if domain check or price is stale) -->
+{% if not detail.cand_freshness.is_all_fresh %}
+<div class="card" style="background-color: var(--red-bg); border-color: var(--red-border); color: #fca5a5; margin-bottom: 1.5rem;">
+  <strong>Freshness Alert for this Candidate:</strong>
+  <ul style="margin-left: 1.25rem; margin-top: 0.25rem;">
+    {% for w in detail.cand_freshness.warnings %}
+      <li>{{ w }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="grid-2">
+  <!-- Left Column: Gate Checklist & Buy Links -->
+  <div>
+    <!-- Gate Checklist Card -->
+    <div class="card">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem;">
+        Non-Negotiable Gates for BUY_CANDIDATE
+      </h2>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Every gate must pass before a candidate can be recommended for manual checkout.
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>1. Not in Registry (unconfirmed)</span>
+          {% if detail.rdap_status == 'AVAILABLE_CANDIDATE' %}
+            <span style="color: #4ade80; font-weight: 700;">&#10003; PASS (404 Not Found)</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; FAIL ({{ detail.rdap_status }})</span>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>2. Registrar Price Data Fresh (&lt;7 days)</span>
+          {% if detail.cand_freshness.price_fresh %}
+            <span style="color: #4ade80; font-weight: 700;">&#10003; PASS</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; FAIL (STALE)</span>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>3. Availability Check Fresh (&lt;60 min)</span>
+          {% if detail.cand_freshness.check_fresh_60m %}
+            <span style="color: #4ade80; font-weight: 700;">&#10003; PASS ({% if detail.cand_freshness.check_age_minutes is not none and detail.cand_freshness.check_age_minutes != 'UNKNOWN' %}{{ detail.cand_freshness.check_age_minutes|round(0)|int }}m ago{% else %}fresh{% endif %})</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; RE-CHECK REQUIRED ({% if detail.cand_freshness.check_age_minutes is not none and detail.cand_freshness.check_age_minutes != 'UNKNOWN' %}{{ detail.cand_freshness.check_age_minutes|round(0)|int }}m old{% else %}stale{% endif %})</span>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>4. Human End-User Sentence Written</span>
+          {% if detail.is_verified_human and detail.human_rationale %}
+            <span style="color: #4ade80; font-weight: 700;">&#10003; PASS</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; REQUIRED (&ge;15 words)</span>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>5. Fits within USD 200 3-Year Carry Budget</span>
+          <span style="color: #4ade80; font-weight: 700;">&#10003; PASS (${{ "%.2f"|format(detail.carry_3yr_usd) }})</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <span>6. Confirmed at a Registrar Checkout</span>
+          {% if detail.readiness.gates.registrar_confirmed %}
+            <span style="color: #4ade80; font-weight: 700;">
+              &#10003; PASS ({{ detail.registrar_confirmation.registrar }} - {{ detail.registrar_confirmation.result }})
+              {% if detail.reg_conf_remaining_minutes is not none %}
+                <small style="color: #38bdf8; font-weight: normal; margin-left: 0.35rem;">({{ detail.reg_conf_remaining_minutes }} min remaining)</small>
+              {% endif %}
+            </span>
+          {% elif detail.registrar_confirmation and detail.reg_conf_remaining_minutes is not none and detail.reg_conf_remaining_minutes <= 0 and detail.registrar_confirmation.result == 'available' %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; Confirmation expired: re-confirm at checkout (0 min remaining)</span>
+          {% elif detail.registrar_confirmation and detail.registrar_confirmation.result == 'registry busy / could not confirm' %}
+            <span style="color: #fbbf24; font-weight: 700;">&#9888; BUSY (retry allowed)</span>
+          {% elif detail.registrar_confirmation %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; FAIL ({{ detail.registrar_confirmation.result }})</span>
+          {% else %}
+            <span style="color: #f87171; font-weight: 700;">&#10007; REQUIRED (Human check)</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Human Rationale Editor (Rule 3) -->
+    <div class="card">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
+        Human End-User Rationale
+      </h2>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        Formula: <em>"A [type of company] would pay [$X] because [reason]"</em>. Requires at least 15 words.
+      </div>
+
+      {% if detail.author == 'legacy' %}
+      <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--amber-border); color: #fbbf24; padding: 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-bottom: 0.75rem;">
+        <strong>Notice:</strong> Source unknown: please rewrite in the UI and confirm authorship before this name can be gated.
+      </div>
+      {% endif %}
+
+      <textarea id="rationaleInput" rows="3" style="width: 100%; margin-bottom: 0.5rem;" 
+                placeholder="A startup building [what] would pay [$X] because [reason]..." 
+                oninput="updateWordCount()">{{ detail.human_rationale }}</textarea>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        <span id="wordCountLabel">Word count: 0 / 15 minimum</span>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+          <input type="checkbox" id="userConfirmCheck" {% if detail.is_verified_human %}checked{% endif %}>
+          I confirm I wrote this rationale myself without automated AI generation.
+        </label>
+      </div>
+
+      <button onclick="saveRationale('{{ detail.label }}')" class="btn btn-primary btn-sm" id="saveRationaleBtn">
+        Save Verified Human Rationale
+      </button>
+      <span id="saveStatus" style="margin-left: 0.75rem; font-size: 0.8rem;"></span>
+    </div>
+
+    <!-- Gate 6: Confirmed at a Registrar Checkout -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+        <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0;">
+          Gate 6: Registrar Checkout Confirmation (Human Only)
+        </h2>
+        {% if detail.reg_conf_remaining_minutes is not none %}
+          {% if detail.reg_conf_remaining_minutes > 0 and detail.readiness.gates.registrar_confirmed %}
+            <span class="badge badge-avail" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;">
+              &#9201; {{ detail.reg_conf_remaining_minutes }} min remaining
+            </span>
+          {% elif detail.reg_conf_remaining_minutes <= 0 and detail.registrar_confirmation and detail.registrar_confirmation.result == 'available' %}
+            <span class="badge badge-reg" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;">
+              &#9888; Confirmation expired: re-confirm at checkout
+            </span>
+          {% endif %}
+        {% endif %}
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        <em>Never automate registrar checkout pages or scrape search results.</em> Confirm manually at a registrar checkout page and log the empirical outcome. Confirmations strictly expire after 60 minutes.
+        {% if detail.reg_conf_remaining_minutes is not none and detail.registrar_confirmation and detail.registrar_confirmation.result == 'available' %}
+          <div style="margin-top: 0.35rem; font-weight: 600; color: {% if detail.reg_conf_remaining_minutes > 0 %}#38bdf8{% else %}#f87171{% endif %};">
+            {% if detail.reg_conf_remaining_minutes > 0 %}
+              Minutes remaining: {{ detail.reg_conf_remaining_minutes }} min (Attempt: {{ detail.registrar_confirmation.checked_utc }})
+            {% else %}
+              Status: Confirmation expired: re-confirm at checkout (0 min remaining; Attempt: {{ detail.registrar_confirmation.checked_utc }})
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Registrar:</label>
+          <input type="text" id="regConfName" value="{{ detail.registrar_confirmation.registrar if detail.registrar_confirmation else 'Hostinger' }}" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Checkout Result:</label>
+          <select id="regConfResult" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+            <option value="available" {% if detail.registrar_confirmation and detail.registrar_confirmation.result == 'available' %}selected{% endif %}>available (proceeds to cart)</option>
+            <option value="already taken" {% if detail.registrar_confirmation and 'taken' in detail.registrar_confirmation.result %}selected{% endif %}>already taken / registered</option>
+            <option value="premium" {% if detail.registrar_confirmation and detail.registrar_confirmation.result == 'premium' %}selected{% endif %}>premium pricing</option>
+            <option value="error" {% if detail.registrar_confirmation and detail.registrar_confirmation.result == 'error' %}selected{% endif %}>checkout error</option>
+            <option value="registry busy / could not confirm" {% if detail.registrar_confirmation and 'busy' in detail.registrar_confirmation.result %}selected{% endif %}>registry busy / could not confirm</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 0.5rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Attempt Timestamp (UTC):</label>
+        <input type="text" id="regConfTime" value="{{ detail.registrar_confirmation.checked_utc if detail.registrar_confirmation else '' }}" placeholder="YYYY-MM-DDTHH:MM:SSZ" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 0.5rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Notes / Evidence:</label>
+        <input type="text" id="regConfNotes" value="{{ detail.registrar_confirmation.notes if detail.registrar_confirmation else '' }}" placeholder="e.g. human-reported at registrar cart" style="width: 100%; padding: 0.4rem; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 0.75rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+          <input type="checkbox" id="regConfHuman" checked>
+          I confirm I verified this at a live registrar checkout page as a human author.
+        </label>
+      </div>
+
+      <button onclick="saveCheckoutConfirmation('{{ detail.domain }}')" class="btn btn-primary btn-sm" id="saveConfBtn">
+        Save Gate 6 Confirmation
+      </button>
+      <span id="confStatus" style="margin-left: 0.75rem; font-size: 0.8rem;"></span>
+    </div>
+
+    <!-- Registrar Comparison & Buy Links (Rule 4) -->
+    <div class="card">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
+        Registrar Pricing Comparison
+      </h2>
+      <div style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 0.75rem;">
+        <strong>Notice:</strong> Confirm premium/reserved status and final renewal price at registrar checkout.
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Registrar</th>
+            <th>Year 1</th>
+            <th>Renewal</th>
+            <th>3-Yr Carry</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in detail.registrar_options %}
+          <tr>
+            <td>
+              <strong>{{ r.name }}</strong>
+              {% if r.is_stale %}<span class="badge badge-reserved">STALE</span>{% endif %}
+            </td>
+            <td>${{ "%.2f"|format(r.year1_usd) }}</td>
+            <td>${{ "%.2f"|format(r.renewal_usd) }}</td>
+            <td><strong>${{ "%.2f"|format(r.carry_3yr) }}</strong></td>
+            <td>
+              {% if detail.rdap_status == 'AVAILABLE_CANDIDATE' %}
+                <a href="{{ r.checkout_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                  Search / Checkout &nearr;
+                </a>
+              {% else %}
+                <a href="https://sedo.com/search/?keyword={{ detail.domain }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                  Sedo &nearr;
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if detail.rdap_status == 'REGISTERED' %}
+      <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.25); border-radius: 6px; font-size: 0.8rem; color: var(--text-muted);">
+        <strong>Aftermarket Note:</strong> Asking prices on marketplaces are not verified sale prices.
+        Check <a href="https://www.afternic.com/search?k={{ detail.domain }}" target="_blank" rel="noopener" style="color: var(--accent);">Afternic</a> or 
+        <a href="https://dan.com/buy-domain/{{ detail.domain }}" target="_blank" rel="noopener" style="color: var(--accent);">Dan.com</a>.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column: Scores, Twin Signals, Trademarks -->
+  <div>
+    <!-- Screening Score Card -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem;">
+        <div>
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Screening Score</h2>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Screening score, not a value estimate.</div>
+        </div>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent);">
+          {{ "%.1f"|format(detail.total_score) }} <small style="font-size: 1rem; color: var(--text-muted);">/ 100</small>
+        </div>
+      </div>
+
+      <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 1rem;">
+        <strong>Tier Placement:</strong> 
+        {% if detail.tier == 'BUY_CANDIDATE' %}
+          <span class="badge badge-tier-buy">BUY_CANDIDATE</span>
+        {% elif detail.tier == 'MONITOR' %}
+          <span class="badge badge-tier-monitor">MONITOR</span>
+        {% else %}
+          <span class="badge badge-tier-avoid">AVOID</span>
+        {% endif %}
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">
+        Score components reflect shape, length, phonotactics, core AI keyword overlap, twin signals, and human rationale.
+      </div>
+    </div>
+
+    <!-- Twin Signals Card -->
+    <div class="card">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Twin Signals (.com and .ai)</h2>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Recorded as context, not proof. Active sites indicate existing brand/product space.
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <strong>{{ detail.label }}.com</strong>
+            <span class="badge badge-reg">{{ detail.twin_signals.com_status }}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">{{ detail.twin_signals.com_details or "No details recorded" }}</div>
+        </div>
+
+        <div style="padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <strong>{{ detail.label }}.ai</strong>
+            <span class="badge badge-reg">{{ detail.twin_signals.ai_status }}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">{{ detail.twin_signals.ai_details or "No details recorded" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trademark Risk Review (Rule 7) -->
+    <div class="card">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Trademark & Conflict Review</h2>
+      <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+        <strong>Notice:</strong> Potential trademark risk; professional legal review recommended. Never state legal conclusions.
+      </p>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="https://tmsearch.uspto.gov/search/search-information?query={{ detail.label }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+          USPTO Search &nearr;
+        </a>
+        <a href="https://euipo.europa.eu/eSearch/#basic/1+1+1+1/100+100+100+100/{{ detail.label }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+          EUIPO Search &nearr;
+        </a>
+        <a href="https://www.wipo.int/branddb/en/?q={{ detail.label }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+          WIPO Global Brand Database &nearr;
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateWordCount() {
+  const text = document.getElementById('rationaleInput').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  const label = document.getElementById('wordCountLabel');
+  label.innerText = `Word count: ${words} / 15 minimum`;
+  label.style.color = words >= 15 ? '#4ade80' : 'var(--text-muted)';
+}
+updateWordCount();
+
+function saveRationale(label) {
+  const text = document.getElementById('rationaleInput').value.trim();
+  const confirmed = document.getElementById('userConfirmCheck').checked;
+  const statusEl = document.getElementById('saveStatus');
+
+  fetch('/api/rationale/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ label: label, rationale: text, verified_checkbox: confirmed })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      statusEl.innerText = 'Saved!';
+      statusEl.style.color = '#4ade80';
+      setTimeout(() => location.reload(), 800);
+    } else {
+      statusEl.innerText = data.error;
+      statusEl.style.color = '#f87171';
+    }
+  })
+  .catch(err => {
+    statusEl.innerText = 'Error saving rationale.';
+    statusEl.style.color = '#f87171';
+  });
+}
+
+function toggleShortlist(domain) {
+  fetch('/api/shortlist/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain: domain })
+  })
+  .then(res => res.json())
+  .then(data => {
+    location.reload();
+  });
+}
+
+function recheckCandidate(domain) {
+  const btn = document.getElementById('recheckBtn');
+  btn.innerText = 'Checking registry (polite rate limiter)...';
+  btn.disabled = true;
+
+  fetch('/api/recheck', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domains: [domain] })
+  })
+  .then(res => res.json())
+  .then(data => {
+    location.reload();
+  })
+  .catch(err => {
+    alert('Re-check failed: ' + err);
+    btn.disabled = false;
+  });
+}
+
+function saveCheckoutConfirmation(domain) {
+  const registrar = document.getElementById('regConfName').value.trim();
+  const result = document.getElementById('regConfResult').value;
+  let timeStr = document.getElementById('regConfTime').value.trim();
+  if (!timeStr) {
+    timeStr = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  }
+  const notes = document.getElementById('regConfNotes').value.trim();
+  const isHuman = document.getElementById('regConfHuman').checked;
+  const statusEl = document.getElementById('confStatus');
+
+  if (!isHuman) {
+    statusEl.innerText = 'Must confirm you verified as human author.';
+    statusEl.style.color = '#f87171';
+    return;
+  }
+
+  fetch('/api/confirm-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      domain: domain,
+      registrar: registrar,
+      result: result,
+      checked_utc: timeStr,
+      notes: notes
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      statusEl.innerText = data.is_valid ? 'Gate 6 Passed!' : 'Recorded: ' + data.message;
+      statusEl.style.color = data.is_valid ? '#4ade80' : '#fbbf24';
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      statusEl.innerText = data.message || 'Error saving confirmation.';
+      statusEl.style.color = '#f87171';
+    }
+  })
+  .catch(err => {
+    statusEl.innerText = 'Network error saving confirmation.';
+    statusEl.style.color = '#f87171';
+  });
+}
+</script>
+{% endblock %}

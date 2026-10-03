@@ -1,0 +1,26 @@
+{
+  "example-cloud.si": {
+    "domain": "example-cloud.si",
+    "registrar": "Registrar A",
+    "checked_utc": "2026-09-30T12:04:00Z",
+    "result": "available",
+    "author": "human",
+    "notes": "Synthetic demo check: available in cart"
+  },
+  "demo-agent.si": {
+    "domain": "demo-agent.si",
+    "registrar": "Registrar B",
+    "checked_utc": "UNKNOWN",
+    "result": "already taken",
+    "author": "human",
+    "notes": "Synthetic demo check: already taken"
+  },
+  "test-synth.si": {
+    "domain": "test-synth.si",
+    "registrar": "Registrar C",
+    "checked_utc": "2026-09-30T12:32:00Z",
+    "result": "registry busy / could not confirm",
+    "author": "human",
+    "notes": "Synthetic demo check: busy"
+  }
+}

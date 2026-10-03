@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Watch Mode{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 5: Watch Mode & Speculative Rush Tracker</h1>
+    <div class="page-desc">Monitors status transitions into quarantine/drop and tracks whether registry volume is recorded daily registrations.</div>
+  </div>
+  <div>
+    <button onclick="triggerWatch()" class="btn btn-primary" id="watchBtn">Run Daily Watch Check Now</button>
+  </div>
+</div>
+
+<div id="watchStatusArea" style="display: none; margin-bottom: 1.5rem;" class="card">
+  <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;" id="watchStatusText">Running watch mode...</div>
+  <pre id="watchLog" style="background: #000; padding: 1rem; border-radius: 4px; font-size: 0.8rem; color: #38bdf8; max-height: 200px; overflow-y: auto;"></pre>
+</div>
+
+<!-- Status Diffs Card -->
+<div class="card">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Recent Status Transitions
+  </h2>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+    Tracks names transitioning into <code>QUARANTINE</code>, <code>PENDING_DELETE</code>, or <code>AVAILABLE</code>.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Previous Status</th>
+        <th>New Status</th>
+        <th>Recorded UTC</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in diffs %}
+      <tr>
+        <td><strong>{{ d.domain }}</strong></td>
+        <td><span class="badge badge-reg">{{ d.old_status }}</span></td>
+        <td>
+          {% if 'AVAILABLE' in d.new_status %}
+            <span class="badge badge-avail">{{ d.new_status }}</span>
+          {% elif 'QUARANTINE' in d.new_status %}
+            <span class="badge badge-quarantine">{{ d.new_status }}</span>
+          {% else %}
+            <span class="badge badge-uncertain">{{ d.new_status }}</span>
+          {% endif %}
+        </td>
+        <td><small>{{ d.recorded_utc }}</small></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          No status transitions recorded yet. Watch mode captures changes across consecutive daily runs.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Registry Counters Table & Velocity Assessment -->
+<div class="card">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Register.si Public Counters Time-Series
+  </h2>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+    <strong>Caption:</strong> Shows recorded daily registrations; not a forecast or prediction.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Total .si Domains</th>
+        <th>Registrations in 24h</th>
+        <th>Registrations Previous Month</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in counter_history %}
+      <tr>
+        <td><strong>{{ c.snapshot_date }}</strong></td>
+        <td>{{ "{:,}".format(c.total_domains) }}</td>
+        <td><strong>{{ "{:,}".format(c.domains_last_24h) }}</strong></td>
+        <td>{{ "{:,}".format(c.domains_last_month) }}</td>
+        
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          No snapshots recorded yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Daily Watchlist Targets Card -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">
+      Priority Watchlist Targets
+    </h2>
+    <span class="badge badge-reg">Max 100 Lookups / Day</span>
+  </div>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+    High-priority domains tracked on daily watch runs (including active quarantine monitors).
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Polling Frequency</th>
+        <th>Added (UTC)</th>
+        <th>Monitoring Objective</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in watchlist %}
+      <tr>
+        <td><strong>{{ w.domain }}</strong></td>
+        <td><code>{{ w.frequency }}</code></td>
+        <td><small>{{ w.added_utc[:19] }}Z</small></td>
+        <td>{{ w.notes }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+          No custom watchlist domains configured in scout.db.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Recent Watch Log (watch_log.csv) -->
+<div class="card">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Daily Watch Execution Log (<code>watch_log.csv</code>)
+  </h2>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+    Historical log of authoritative checks, quarantine transitions, and status verifications.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp (UTC)</th>
+        <th>Domain</th>
+        <th>Old Status</th>
+        <th>New Status</th>
+        <th>HTTP Code</th>
+        <th>Raw RDAP / RGP Status</th>
+        <th>Event Type</th>
+        <th>Observed Notes</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in watch_log %}
+      <tr>
+        <td><small>{{ entry.timestamp_utc[:19] }}Z</small></td>
+        <td><strong>{{ entry.domain }}</strong></td>
+        <td><span class="badge badge-reg">{{ entry.old_status }}</span></td>
+        <td>
+          {% if 'AVAILABLE' in entry.new_status %}
+            <span class="badge badge-avail">NOT IN REGISTRY (unconfirmed)</span>
+          {% elif 'QUARANTINE' in entry.new_status %}
+            <span class="badge badge-quarantine">{{ entry.new_status }}</span>
+          {% else %}
+            <span class="badge badge-uncertain">{{ entry.new_status }}</span>
+          {% endif %}
+        </td>
+        <td><code>{{ entry.http_status }}</code></td>
+        <td><code><small>{{ entry.raw_rdap_status }}</small></code></td>
+        <td><code>{{ entry.event_type }}</code></td>
+        <td><small>{{ entry.notes }}</small></td>
+        <td><code><small>{{ entry.source }}</small></code></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+          No watch log entries recorded yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Scheduled Task Instructions Card -->
+<div class="card" style="border-left: 4px solid var(--accent);">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    How to Schedule Daily Watch (Windows Task Scheduler)
+  </h2>
+  <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+    To run automated daily monitoring without opening the browser, schedule <code>run_watch_daily.bat</code>:
+  </p>
+  <ol style="font-size: 0.82rem; color: var(--text-muted); padding-left: 1.25rem; line-height: 1.8;">
+    <li>Press <kbd>Win + R</kbd>, type <code>taskschd.msc</code>, and hit <kbd>Enter</kbd> to open Windows Task Scheduler.</li>
+    <li>In the right pane, click <strong>Create Basic Task...</strong> and name it <code>SI Scout Daily Watch</code>.</li>
+    <li>Select <strong>Trigger: Daily</strong>, and set the start time (e.g. <code>08:00 AM</code>).</li>
+    <li>Select <strong>Action: Start a program</strong>.</li>
+    <li>In <strong>Program/script</strong>, browse and select: <br><code>run_watch_daily.bat</code> (or <code>run_watch_daily.sh</code> on Linux/macOS)</li>
+    <li>In <strong>Start in (optional)</strong>, enter the repository folder path.</li>
+    <li>Click <strong>Finish</strong>. The runner will execute daily, checking the watchlist + top 50 earliest-expiring names (capped at 100 queries/day at 1 req/s) and updating <code>watch_log.csv</code>.</li>
+  </ol>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function triggerWatch() {
+  const btn = document.getElementById('watchBtn');
+  const area = document.getElementById('watchStatusArea');
+  const text = document.getElementById('watchStatusText');
+  const log = document.getElementById('watchLog');
+
+  btn.disabled = true;
+  area.style.display = 'block';
+  text.innerText = 'Connecting to Register.si public statistics...';
+  log.innerText = 'Initiating watch mode process...\n';
+
+  fetch('/api/watch/run', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      text.innerText = 'Watch mode run completed successfully!';
+      log.innerText += data.output || 'Snapshot stored in scout.db.\n';
+      setTimeout(() => location.reload(), 1500);
+    })
+    .catch(err => {
+      text.innerText = 'Watch mode encountered an error.';
+      log.innerText += '\nError: ' + err;
+      btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

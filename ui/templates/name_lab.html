@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Name Lab — Offline Heuristic Screener{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--status-positive);">
+  <div class="card-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <h1 class="card-title" style="font-size: 1.65rem;">Name Lab</h1>
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--status-positive); border-color: var(--status-positive);">
+          Offline Heuristic Engine
+        </span>
+      </div>
+      <p class="card-subtitle">Instant offline linguistic, syntactic, and trademark-collision evaluation. Zero network queries.</p>
+    </div>
+    <span class="brand-badge" style="font-family: var(--font-mono);">
+      Offline Mode
+    </span>
+  </div>
+
+  <!-- Mandatory Grounding Alert -->
+  <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); color: var(--status-negative); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.5rem;">
+    <strong>Mandatory Disclaimer:</strong> Not checked against the registry. Availability must be confirmed at a registrar. Heuristic score is not an appraisal and is not a forecast.
+  </div>
+
+  <!-- Quick Candidate Chips -->
+  <div style="margin-bottom: 1rem;">
+    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 0.4rem;">
+      Quick Test Labels:
+    </div>
+    <div class="preset-chips-row">
+      <button class="chip-btn name-sample-btn" data-label="mindagent">✓ mindagent (Passes)</button>
+      <button class="chip-btn name-sample-btn" data-label="cloudflow">✓ cloudflow (Passes)</button>
+      <button class="chip-btn name-sample-btn" data-label="112">⚠️ 112 (Emergency Reserved)</button>
+      <button class="chip-btn name-sample-btn" data-label="synthexample">⛔ synthexample (Brand Blocked)</button>
+      <button class="chip-btn name-sample-btn" data-label="in--valid">❌ in--valid (Syntax Fail)</button>
+    </div>
+  </div>
+
+  <!-- Big Interactive Terminal Input -->
+  <div class="name-input-hero">
+    <input type="text" id="nameLabInput" class="name-input-field" placeholder="Type a label (e.g. mindagent, cloudflow, smart)..." value="mindagent" autofocus autocomplete="off" spellcheck="false">
+    <button id="clearInputBtn" class="theme-toggle-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; padding: 0.3rem 0.6rem;">
+      Clear
+    </button>
+  </div>
+
+  <!-- Results Surface -->
+  <div id="nameLabResults" style="display: none; background: var(--bg-surface-elevated); padding: 1.75rem; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-md);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 id="fqdnTitle" style="margin: 0; font-family: var(--font-mono); font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">mindagent.si</h2>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap;">
+          <span id="syntaxBadge" class="brand-badge">Syntax Valid</span>
+          <span id="blockBadge" class="brand-badge">Not on this tool's small example blocklist. This is not a trademark search.</span>
+        </div>
+      </div>
+      <div style="text-align: right; background: var(--bg-surface); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-faint); font-weight: 700; letter-spacing: 0.05em;">Name Lab shape score, not the scanner score</div>
+        <div id="scoreNumber" style="font-family: var(--font-mono); font-size: 2.5rem; font-weight: 900; color: var(--accent-primary); line-height: 1;">80.0</div>
+        <div style="font-size: 0.72rem; color: var(--text-faint); margin-top: 0.25rem;">Max 100 (Shape Only)</div>
+      </div>
+    </div>
+
+    <!-- Component Breakdown Bar -->
+    <div style="margin: 1.5rem 0;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.825rem; font-weight: 700; margin-bottom: 0.5rem;">
+        <span style="text-transform: uppercase; letter-spacing: 0.04em;">Heuristic Component Distribution</span>
+        <span style="color: var(--text-muted); font-family: var(--font-mono);">Length (40) + Phonetics (35) + Keyword Fit (25)</span>
+      </div>
+      <div class="score-breakdown-bar">
+        <div id="lengthScoreBar" class="score-segment-length" style="width: 40%;" title="Length Score"></div>
+        <div id="pronounceScoreBar" class="score-segment-pronounce" style="width: 35%;" title="Pronounceability"></div>
+        <div id="keywordScoreBar" class="score-segment-keyword" style="width: 25%;" title="Keyword Fit"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+        <span>Length Score: <strong id="lengthScoreVal" style="color: #60a5fa;">40 / 40</strong></span>
+        <span>Phonetics & Syllables: <strong id="pronounceScoreVal" style="color: #34d399;">35 / 35</strong></span>
+        <span>Keyword Affinity: <strong id="keywordScoreVal" style="color: #a78bfa;">20 / 25</strong></span>
+      </div>
+    </div>
+
+    <!-- Metric Diagnostics Grid -->
+    <div id="metricsDetails"></div>
+  </div>
+
+  <div class="source-footer" style="margin-top: 2rem;">
+    Linguistic rules evaluated via local syllables and Register.si syntax specifications. Popular-site list is downloaded by bootstrap_data.py (not bundled); popular-site list not loaded if absent. This is not a trademark search.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/name_lab.js') }}"></script>
+{% endblock %}

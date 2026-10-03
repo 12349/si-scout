@@ -1,0 +1,10 @@
+# ==============================================================================
+# SI Scout - Example Private Terms List
+# Copy this file to 'private_terms.txt' and list any sensitive keywords,
+# internal codenames, secret candidate labels, or usernames you wish to protect.
+# 'private_terms.txt' is strictly ignored by git.
+# ==============================================================================
+
+my_secret_label
+internal_research_term
+operator_private_handle

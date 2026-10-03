@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Candidates Explorer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 2: Candidates Explorer</h1>
+    <div class="page-desc">Filter, rank, and inspect screened .si domains. Click any row to open the detail panel.</div>
+  </div>
+  <div>
+    <button onclick="downloadFilteredCSV()" class="btn btn-outline">Export Filtered CSV</button>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card" style="padding: 1rem;">
+  <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 0.75rem; align-items: center;">
+    <div>
+      <input type="text" id="searchInput" placeholder="Search domain label..." style="width: 100%;" oninput="applyFilters()">
+    </div>
+    <div>
+      <select id="statusFilter" style="width: 100%;" onchange="applyFilters()">
+        <option value="">All Statuses</option>
+        <option value="AVAILABLE_CANDIDATE">NOT IN REGISTRY (unconfirmed)</option>
+        <option value="REGISTERED">REGISTERED (200)</option>
+        <option value="QUARANTINE">QUARANTINE / PENDING_DELETE</option>
+        <option value="RESERVED">RESERVED</option>
+      </select>
+    </div>
+    <div>
+      <select id="tierFilter" style="width: 100%;" onchange="applyFilters()">
+        <option value="">All Tiers</option>
+        <option value="BUY_CANDIDATE">BUY_CANDIDATE</option>
+        <option value="MONITOR">MONITOR</option>
+        <option value="AVOID">AVOID</option>
+      </select>
+    </div>
+    <div>
+      <select id="lengthFilter" style="width: 100%;" onchange="applyFilters()">
+        <option value="">All Lengths</option>
+        <option value="short">Short (&le; 6 chars)</option>
+        <option value="medium">Medium (7&ndash;10 chars)</option>
+        <option value="long">Long (> 10 chars)</option>
+      </select>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+        <input type="checkbox" id="availOnly" onchange="applyFilters()"> Not in Registry Only
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Table Card -->
+<div class="card" style="padding: 0; overflow-x: auto;">
+  <table id="candidatesTable">
+    <thead>
+      <tr>
+        <th style="width: 40px;">★</th>
+        <th>Domain</th>
+        <th>Status</th>
+        <th>Screening Score</th>
+        <th>Length</th>
+        <th>1-Yr Cost</th>
+        <th>3-Yr Carry</th>
+        <th>Cheapest Registrar</th>
+        <th>Tier</th>
+        <th>Checked (UTC)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      {% for c in candidates %}
+      <tr class="candidate-row" 
+          data-domain="{{ c.domain }}"
+          data-status="{{ c.rdap_status }}"
+          data-tier="{{ c.tier }}"
+          data-score="{{ c.total_score }}"
+          data-length="{{ c.length }}"
+          onclick="openDetail('{{ c.domain }}')">
+        <td onclick="event.stopPropagation();">
+          <button class="btn btn-sm btn-outline star-btn" 
+                  data-domain="{{ c.domain }}"
+                  onclick="toggleStar('{{ c.domain }}', this)">
+            {% if c.is_shortlisted %}&#9733;{% else %}&#9734;{% endif %}
+          </button>
+        </td>
+        <td>
+          <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ c.domain }}</strong>
+        </td>
+        <td>
+          {% if c.rdap_status == 'AVAILABLE_CANDIDATE' %}
+            <span class="badge badge-avail">NOT IN REGISTRY (unconfirmed)</span>
+          {% elif c.rdap_status == 'REGISTERED' %}
+            <span class="badge badge-reg">REGISTERED</span>
+          {% elif 'QUARANTINE' in c.rdap_status %}
+            <span class="badge badge-quarantine">QUARANTINE</span>
+          {% elif c.rdap_status == 'RESERVED' %}
+            <span class="badge badge-reserved">RESERVED</span>
+          {% else %}
+            <span class="badge badge-uncertain">{{ c.rdap_status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-weight: 700; color: {% if c.total_score >= 60 %}#38bdf8{% else %}var(--text-muted){% endif %};">
+            {{ "%.1f"|format(c.total_score) }}
+          </span>
+          <span style="font-size: 0.7rem; color: var(--text-muted);">/100</span>
+        </td>
+        <td>{{ c.length }}</td>
+        <td>${{ "%.2f"|format(c.year1_usd) }}</td>
+        <td>${{ "%.2f"|format(c.carry_3yr_usd) }}</td>
+        <td>{{ c.cheapest_registrar if c.cheapest_registrar and c.cheapest_registrar != "nan" else "-" }}</td>
+        <td>
+          {% if c.tier == 'BUY_CANDIDATE' %}
+            <span class="badge badge-tier-buy">BUY_CANDIDATE</span>
+          {% elif c.tier == 'MONITOR' %}
+            <span class="badge badge-tier-monitor">MONITOR</span>
+          {% else %}
+            <span class="badge badge-tier-avoid">AVOID</span>
+          {% endif %}
+        </td>
+        <td><small style="color: var(--text-muted);">{{ c.checked_utc }}</small></td>
+        <td onclick="event.stopPropagation();">
+          <a href="/detail/{{ c.domain }}" class="btn btn-outline btn-sm">Inspect</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+          No candidate data loaded yet. Run a scan from <a href="/scan">Scan Control</a> to screen domains.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div id="emptyMessage" style="display: none; text-align: center; padding: 3rem; color: var(--text-muted);">
+    <strong>Nothing matched your active filters.</strong><br>
+    Most strong names are already registered; this is expected. Try clearing filters.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const status = document.getElementById('statusFilter').value;
+  const tier = document.getElementById('tierFilter').value;
+  const length = document.getElementById('lengthFilter').value;
+  const availOnly = document.getElementById('availOnly').checked;
+
+  const rows = document.querySelectorAll('.candidate-row');
+  let visibleCount = 0;
+
+  rows.forEach(row => {
+    const rowDomain = row.getAttribute('data-domain').toLowerCase();
+    const rowStatus = row.getAttribute('data-status');
+    const rowTier = row.getAttribute('data-tier');
+    const rowLen = parseInt(row.getAttribute('data-length') || '0', 10);
+
+    let match = true;
+
+    if (search && !rowDomain.includes(search)) match = false;
+    if (status && !rowStatus.includes(status)) match = false;
+    if (tier && rowTier !== tier) match = false;
+    if (availOnly && rowStatus !== 'AVAILABLE_CANDIDATE') match = false;
+
+    if (length === 'short' && rowLen > 6) match = false;
+    if (length === 'medium' && (rowLen <= 6 || rowLen > 10)) match = false;
+    if (length === 'long' && rowLen <= 10) match = false;
+
+    if (match) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+
+  const emptyMsg = document.getElementById('emptyMessage');
+  if (visibleCount === 0 && rows.length > 0) {
+    emptyMsg.style.display = 'block';
+  } else {
+    emptyMsg.style.display = 'none';
+  }
+}
+
+function openDetail(domain) {
+  window.location.href = '/detail/' + domain;
+}
+
+function toggleStar(domain, btn) {
+  fetch('/api/shortlist/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain: domain })
+  })
+  .then(res => res.json())
+  .then(data => {
+    btn.innerHTML = data.is_shortlisted ? '&#9733;' : '&#9734;';
+  })
+  .catch(err => console.error(err));
+}
+
+function downloadFilteredCSV() {
+  window.location.href = '/api/export/csv';
+}
+</script>
+{% endblock %}

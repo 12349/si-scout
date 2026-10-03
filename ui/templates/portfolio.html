@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Portfolio & Outreach Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 7: Post-Purchase Portfolio & Outreach</h1>
+    <div class="page-desc">Disciplined tracking of acquired domains, renewal calendar, target buyer outreach, and self-authored kill criteria.</div>
+  </div>
+</div>
+
+<!-- Decision Calendar Alert -->
+<div class="card" style="border-left: 4px solid var(--amber); background: rgba(245, 158, 11, 0.05); margin-bottom: 1.5rem;">
+  <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Key Milestones & Decision Calendar</div>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 0.75rem; font-size: 0.8rem;">
+    <div>
+      <strong style="color: var(--amber);">Day 16 Window:</strong>
+      <p style="color: var(--text-muted); margin-top: 0.2rem;">Refund window closes (applies only if DNS remains empty).</p>
+    </div>
+    <div>
+      <strong style="color: var(--accent);">January 2027:</strong>
+      <p style="color: var(--text-muted); margin-top: 0.2rem;">Mid-point review: assess inbound inquiries and verified comps.</p>
+    </div>
+    <div>
+      <strong style="color: #f87171;">August 2027:</strong>
+      <p style="color: var(--text-muted); margin-top: 0.2rem;">Renewal decision point: kill or hold. Never hesitate to drop duds.</p>
+    </div>
+    <div>
+      <strong style="color: #4ade80;">Sept–Nov 2027:</strong>
+      <p style="color: var(--text-muted); margin-top: 0.2rem;">Speculator drop window: 30-day quarantine releases unrenewed names.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Owned Domains Table & Form -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Acquired Domains</h2>
+    <button onclick="document.getElementById('addDomainModal').style.display='block'" class="btn btn-primary btn-sm">
+      + Record Domain Purchase
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Purchase Date</th>
+        <th>Price Paid (incl tax)</th>
+        <th>Registrar</th>
+        <th>16-Day Refund Deadline</th>
+        <th>Annual Renewal Date</th>
+        <th>Asking Price</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><strong>{{ item.domain }}</strong></td>
+        <td>{{ item.purchase_date }}</td>
+        <td>${{ "%.2f"|format(item.price_paid) }}</td>
+        <td>{{ item.registrar }}</td>
+        <td>
+          <span class="tooltip-help" title="Refund eligible within 16 days only if domain was not activated (adding DNS records counts as activation).">
+            {{ item.refund_deadline }}
+          </span>
+        </td>
+        <td>{{ item.renewal_date }}</td>
+        <td>${{ "%.2f"|format(item.asking_price) if item.asking_price else 'N/A' }}</td>
+        <td><span class="badge badge-avail">{{ item.status }}</span></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          No purchased domains recorded yet. Remember the $200 3-year loss limit before purchasing anything.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Outreach Tracker (20-30 target companies) -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Outreach Tracker (Target Buyer Pool)</h2>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Outbound beats waiting: make a curated list of 20–30 relevant AI/SI companies.
+      </div>
+    </div>
+    <button onclick="document.getElementById('addOutreachModal').style.display='block'" class="btn btn-outline btn-sm">
+      + Log Outbound Contact
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Target Company</th>
+        <th>Contact Person</th>
+        <th>Date Contacted</th>
+        <th>Reply Status</th>
+        <th>Notes / Offer</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in outreach %}
+      <tr>
+        <td><strong>{{ log.company }}</strong></td>
+        <td>{{ log.contact_person or 'General inquiry' }}</td>
+        <td>{{ log.date_contacted }}</td>
+        <td><span class="badge badge-quarantine">{{ log.reply_status }}</span></td>
+        <td><small>{{ log.notes }}</small></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          No outreach logged yet. Send direct, honest inquiries to founders or BD leads.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Self-Authored Kill Criteria Contract -->
+<div class="card">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+    Self-Authored Kill-Criteria Contract
+  </h2>
+  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+    Decide your exit criteria now before emotional sunk-cost bias sets in.
+  </div>
+
+  <textarea id="killCriteriaInput" rows="3" style="width: 100%; margin-bottom: 0.5rem;">{{ kill_criteria }}</textarea>
+  <button onclick="saveKillCriteria()" class="btn btn-outline btn-sm">Update Kill Criteria</button>
+  <span id="killStatus" style="font-size: 0.8rem; margin-left: 0.5rem;"></span>
+</div>
+
+<!-- Simple Modals for Adding Domain and Outreach -->
+<div id="addDomainModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;">
+  <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; width: 450px; padding: 1.5rem; margin: 5rem auto;">
+    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Record Domain Purchase</h3>
+    <form onsubmit="event.preventDefault(); submitAddDomain();">
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Domain Name</label>
+        <input type="text" id="newDomain" placeholder="e.g. synthgrid.si" required style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Purchase Date</label>
+        <input type="date" id="newDate" required style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Total Price Paid (USD incl tax)</label>
+        <input type="number" step="0.01" id="newPrice" placeholder="12.13" required style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Registrar</label>
+        <select id="newRegistrar" style="width: 100%;">
+          <option value="Dynadot">Dynadot</option>
+          <option value="Hostinger">Hostinger</option>
+          <option value="Domovanje">Domovanje</option>
+        </select>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" onclick="document.getElementById('addDomainModal').style.display='none'" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="addOutreachModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;">
+  <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; width: 450px; padding: 1.5rem; margin: 5rem auto;">
+    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Log Target Buyer Outreach</h3>
+    <form onsubmit="event.preventDefault(); submitAddOutreach();">
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Company Name</label>
+        <input type="text" id="outCompany" placeholder="e.g. Cognitive Labs" required style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Contact Person</label>
+        <input type="text" id="outContact" placeholder="Founder / Head of BD" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Date Contacted</label>
+        <input type="date" id="outDate" required style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Notes / Pitch</label>
+        <textarea id="outNotes" rows="2" style="width: 100%;"></textarea>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" onclick="document.getElementById('addOutreachModal').style.display='none'" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveKillCriteria() {
+  const text = document.getElementById('killCriteriaInput').value.trim();
+  const status = document.getElementById('killStatus');
+  fetch('/api/portfolio/kill-criteria', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contract_text: text })
+  })
+  .then(res => res.json())
+  .then(data => {
+    status.innerText = 'Saved!';
+    status.style.color = '#4ade80';
+    setTimeout(() => status.innerText = '', 1500);
+  });
+}
+
+function submitAddDomain() {
+  const domain = document.getElementById('newDomain').value;
+  const date = document.getElementById('newDate').value;
+  const price = document.getElementById('newPrice').value;
+  const registrar = document.getElementById('newRegistrar').value;
+
+  fetch('/api/portfolio/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain: domain, purchase_date: date, price_paid: price, registrar: registrar })
+  })
+  .then(res => res.json())
+  .then(data => {
+    location.reload();
+  });
+}
+
+function submitAddOutreach() {
+  const company = document.getElementById('outCompany').value;
+  const contact = document.getElementById('outContact').value;
+  const date = document.getElementById('outDate').value;
+  const notes = document.getElementById('outNotes').value;
+
+  fetch('/api/outreach/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ company: company, contact_person: contact, date_contacted: date, notes: notes })
+  })
+  .then(res => res.json())
+  .then(data => {
+    location.reload();
+  });
+}
+</script>
+{% endblock %}

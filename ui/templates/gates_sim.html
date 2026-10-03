@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Gate Simulator — SI Scout{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--accent-primary);">
+  <div class="card-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <h1 class="card-title" style="font-size: 1.65rem;">Gate Simulator</h1>
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary);">
+          Safety Interlock Stepper
+        </span>
+      </div>
+      <p class="card-subtitle">Interactive hardware-style simulation of SI Scout's six non-negotiable verification gates.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button id="checkAllGatesBtn" class="theme-toggle-btn" style="font-size: 0.8rem;">
+        ✓ Pass All Gates
+      </button>
+      <button id="resetGatesBtn" class="theme-toggle-btn" style="font-size: 0.8rem;">
+        Reset All Gates
+      </button>
+    </div>
+  </div>
+
+  <div style="background: var(--bg-surface-elevated); border-left: 4px solid var(--accent-primary); padding: 0.85rem 1.25rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.88rem; margin-bottom: 1.75rem; border: 1px solid var(--border-subtle); border-left-width: 4px;">
+    <strong>Design Principle:</strong> Automation cannot declare a domain ready to buy. The tool never recommends a name to buy. Capital can only be committed after passing all six manual and automated safety gates.
+  </div>
+
+  <!-- Master Readiness Console -->
+  <div id="simOverallStatus" style="padding: 1.5rem; border-radius: var(--radius-lg); background: var(--bg-surface-elevated); border: 2px solid var(--border-strong); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem; box-shadow: var(--shadow-md);">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+        <span id="masterStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--status-negative); box-shadow: 0 0 10px var(--status-negative);"></span>
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.06em; color: var(--text-faint);">
+          Master Safety Interlock Status
+        </span>
+      </div>
+      <div id="simStatusHeading" style="font-size: 1.5rem; font-weight: 900; font-family: var(--font-mono); color: var(--status-negative); letter-spacing: -0.02em;">
+        NOT READY (6 Gates Incomplete)
+      </div>
+      <div id="simStatusSub" style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.35rem;">
+        Toggle individual gates below to observe how each safety constraint blocks capital commitment.
+      </div>
+    </div>
+    <div style="text-align: right; background: var(--bg-surface); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+      <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-faint); font-weight: 700;">Gates Passed</div>
+      <div id="gatesCountDisplay" style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 900; color: var(--text-primary);">0 / 6</div>
+    </div>
+  </div>
+
+  <!-- The 6 Interlock Cards -->
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <!-- Gate 1 -->
+    <div class="gate-card" id="cardGate1">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate1" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 1: NOT IN REGISTRY (Unconfirmed)</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              The authoritative Register.si RDAP query returned HTTP 404. Note: this only proves the registry has no active delegation record; it does NOT verify registrar retail availability.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate1">FAIL</span>
+      </div>
+    </div>
+
+    <!-- Gate 2 -->
+    <div class="gate-card" id="cardGate2">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate2" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 2: Fresh Registrar Pricing (&le; 7 Days)</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              Active registrar fee snapshots must be verified within the past 7 days. Stale price quotes block buy candidate status to prevent hidden renewal fee inflation.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate2">FAIL</span>
+      </div>
+    </div>
+
+    <!-- Gate 3 -->
+    <div class="gate-card" id="cardGate3">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate3" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 3: Fresh Registry Check (&le; 60 Minutes)</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              A domain check timestamp older than 60 minutes is considered stale for buying decisions. Fast automated drops or competing grabs require recent verification.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate3">FAIL</span>
+      </div>
+    </div>
+
+    <!-- Gate 4 -->
+    <div class="gate-card" id="cardGate4">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate4" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 4: Human Written Rationale (&ge; 15 Words, Non-AI)</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              Requires a human operator to enter a specific justification sentence (&ge; 15 words) and check the "Written by human, not AI" confirmation. Auto-generated rationale is blocked.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate4">FAIL</span>
+      </div>
+    </div>
+
+    <!-- Gate 5 -->
+    <div class="gate-card" id="cardGate5">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate5" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 5: Budget Fit & Holding Carry Allocation</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              Total carry costs (registration + renewals across planned holding years) must fit within the user's allocated budget ceiling after reserve deductions.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate5">FAIL</span>
+      </div>
+    </div>
+
+    <!-- Gate 6 -->
+    <div class="gate-card" id="cardGate6">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
+          <input type="checkbox" id="toggleGate6" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 6: Registrar Checkout Confirmation (&le; 60 Minutes)</strong>
+            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+              A human must manually test the domain in an accredited registrar's shopping cart, record the registrar name, UTC timestamp, and result ("available"). Expires strictly after 60 minutes.
+            </p>
+          </div>
+        </label>
+        <span class="gate-status-pill brand-badge" id="pillGate6">FAIL</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const gates = [1, 2, 3, 4, 5, 6];
+  const toggles = gates.map(n => document.getElementById(`toggleGate${n}`));
+  const pills = gates.map(n => document.getElementById(`pillGate${n}`));
+  const cards = gates.map(n => document.getElementById(`cardGate${n}`));
+  const statusHeading = document.getElementById('simStatusHeading');
+  const statusSub = document.getElementById('simStatusSub');
+  const statusDot = document.getElementById('masterStatusDot');
+  const gatesCount = document.getElementById('gatesCountDisplay');
+  const resetBtn = document.getElementById('resetGatesBtn');
+  const checkAllBtn = document.getElementById('checkAllGatesBtn');
+
+  function update() {
+    let passedCount = 0;
+    const failedGates = [];
+
+    gates.forEach((n, idx) => {
+      const isChecked = toggles[idx].checked;
+      if (isChecked) {
+        passedCount++;
+        pills[idx].textContent = 'PASS';
+        pills[idx].style.backgroundColor = 'var(--status-positive)';
+        pills[idx].style.color = '#fff';
+        cards[idx].classList.add('gate-passed');
+      } else {
+        failedGates.push(`Gate ${n}`);
+        pills[idx].textContent = 'FAIL';
+        pills[idx].style.backgroundColor = 'var(--bg-subtle)';
+        pills[idx].style.color = 'var(--text-muted)';
+        cards[idx].classList.remove('gate-passed');
+      }
+    });
+
+    gatesCount.textContent = `${passedCount} / 6`;
+
+    if (passedCount === 6) {
+      statusHeading.textContent = 'READY FOR HUMAN BUY DECISION';
+      statusHeading.style.color = 'var(--status-positive)';
+      statusDot.style.background = 'var(--status-positive)';
+      statusDot.style.boxShadow = '0 0 10px var(--status-positive)';
+      statusSub.textContent = 'All 6 safety gates passed. Human checkout verification active (valid for 60 min).';
+    } else {
+      statusHeading.textContent = `NOT READY (${passedCount} of 6 Gates Passed)`;
+      statusHeading.style.color = 'var(--status-negative)';
+      statusDot.style.background = 'var(--status-negative)';
+      statusDot.style.boxShadow = '0 0 10px var(--status-negative)';
+      statusSub.textContent = `Missing requirements: ${failedGates.join(', ')}. No purchase can proceed.`;
+    }
+  }
+
+  toggles.forEach(t => t.addEventListener('change', update));
+  resetBtn.addEventListener('click', () => {
+    toggles.forEach(t => t.checked = false);
+    update();
+  });
+  if (checkAllBtn) {
+    checkAllBtn.addEventListener('click', () => {
+      toggles.forEach(t => t.checked = true);
+      update();
+    });
+  }
+
+  update();
+});
+</script>
+{% endblock %}

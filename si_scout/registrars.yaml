@@ -1,0 +1,28 @@
+registrars:
+  dynadot:
+    name: "Dynadot"
+    year1_usd: 12.13
+    renewal_usd: 13.61
+    as_of: "2026-09-30T00:00:00Z"
+    checkout_url_template: "https://www.dynadot.com/domain/search.html?domain={domain}"
+    currency: "USD"
+    status: "VERIFIED_TODAY"
+    notes: "Lowest posted standard registration and renewal cost. Requires real contact verification. Search URL verified loads 200."
+  hostinger:
+    name: "Hostinger"
+    year1_usd: 11.99
+    renewal_usd: 16.99
+    as_of: "2026-09-30T00:00:00Z"
+    checkout_url_template: "https://www.hostinger.com/domain-name-search?domain={domain}"
+    currency: "USD"
+    status: "VERIFIED_TODAY"
+    notes: "Competitive initial year, higher renewal cost. Search URL verified loads 200."
+  domovanje:
+    name: "Domovanje"
+    year1_usd: 16.90
+    renewal_usd: 16.90
+    as_of: "2026-09-30T00:00:00Z"
+    checkout_url_template: "https://www.domovanje.com/domene/?isci={domain}"
+    currency: "EUR_EST_USD"
+    status: "VERIFIED_TODAY"
+    notes: "Direct Slovenian accredited registrar. Search URL verified loads 200."

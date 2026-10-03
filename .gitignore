@@ -1,0 +1,106 @@
+# ==============================================================================
+# SI Scout - Git Ignore Configuration
+# Enforces Privacy & Open-Source Release Boundaries
+# ==============================================================================
+
+# Local databases and production scan results (root level only)
+/scout.db*
+/results.csv
+/report.md
+/strict_survivors.md
+/survivors_report.md
+/drop_watch.csv
+/expiring_soon.csv
+/watch_log.csv
+/watch_execution.log
+
+# Live controls and evaluation audits
+live_controls.*
+live_controls.json
+live_controls.md
+DATA_AUDIT.md
+CHANGELOG_PHASE_D.md
+RELEASE_AUDIT.md
+runbook.md
+antigravity_prompt.md
+antigravity_ui_prompt.md
+
+# Internal research scripts containing real candidate labels
+scripts/inspect_step1.py
+scripts/analyze_tasks.py
+scripts/run_step5_and_6.py
+scripts/verify_ui_screens.py
+scripts/build_strict_funnel.py
+scripts/recheck_uncertain.py
+scripts/recompute_strict_funnel.py
+scripts/run_adaptive_scan.py
+scripts/update_strict_survivors.py
+scripts/calc_stats.py
+scripts/inspect_dashboard.py
+scripts/build_expiring_soon.py
+scripts/prepare_public_repo.py
+
+# Watchlist & Private terms configuration
+/watchlist.yaml
+/private_terms.txt
+
+# Calibration, human confirmations, and user rationales (root level only)
+/calibration.json
+/registrar_confirmations.json
+/rationales.json
+/rationales.*.json
+*.bak.json
+
+# User portfolio and personal scratchpad
+/portfolio.db*
+/portfolio.json
+/portfolio.csv
+scratch/
+_clean_release_test/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+
+# Downloaded third-party bulk lists (use scripts/bootstrap_data.py)
+si_scout/tranco_top100k.json
+tranco*.json
+tranco*.csv
+*.zip
+*.tar.gz
+
+# Python bytecode, virtual environments, and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE & OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Whitelist demo fixtures and UI templates
+!demo_data/**
+demo_data/scout.db*
+demo_data/portfolio.db*
+!ui/templates/portfolio.html

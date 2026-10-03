@@ -1,0 +1,4 @@
+domain,registration_date,expiration_date,pattern,registered_timing,age_at_expiry_years,initial_term_years
+sample-nexus.si,2021-03-01T10:00:00Z,2027-03-01T10:00:00Z,single,BEFORE_SEPT_19_2026,6.0,
+demo-cortex.si,2025-09-29T10:27:06Z,2026-09-29T10:27:06Z,single,BEFORE_SEPT_19_2026,1.0,
+mock-tensor.si,2026-09-20T14:00:00Z,2027-09-20T14:00:00Z,compound,AFTER_SEPT_19_2026,1.0,1.0

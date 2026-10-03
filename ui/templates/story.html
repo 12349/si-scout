@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Story Mode (55s Walkthrough) — SI Scout{% endblock %}
+
+{% block content %}
+<div class="story-wrapper">
+  <!-- Controls Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.6rem;">
+    <div class="story-aspect-controls">
+      <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); align-self: center; margin-right: 0.25rem;">Aspect:</span>
+      <button class="aspect-btn chip-btn active" data-aspect="aspect-16-9">16:9 Landscape</button>
+      <button class="aspect-btn chip-btn" data-aspect="aspect-1-1">1:1 Square</button>
+      <button class="aspect-btn chip-btn" data-aspect="aspect-4-5">4:5 Vertical</button>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button id="playPauseBtn" class="theme-toggle-btn" style="background: var(--accent-primary); color: #fff; font-weight: 800; border-color: var(--accent-primary);">
+        ▶ Play (Space)
+      </button>
+      <button id="prevSlideBtn" class="theme-toggle-btn">&larr; Prev</button>
+      <button id="nextSlideBtn" class="theme-toggle-btn">Next &rarr;</button>
+    </div>
+  </div>
+
+  <!-- Filmstrip Scrubber -->
+  <div id="storyFilmstrip" style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; max-width: 960px; margin-bottom: 1rem; flex-wrap: wrap;">
+    <button class="chip-btn filmstrip-dot active" data-index="0">1. Hook</button>
+    <button class="chip-btn filmstrip-dot" data-index="1">2. Funnel</button>
+    <button class="chip-btn filmstrip-dot" data-index="2">3. Saturation</button>
+    <button class="chip-btn filmstrip-dot" data-index="3">4. Calibration</button>
+    <button class="chip-btn filmstrip-dot" data-index="4">5. The 6 Gates</button>
+    <button class="chip-btn filmstrip-dot" data-index="5">6. Budget Reality</button>
+    <button class="chip-btn filmstrip-dot" data-index="6">7. Closing</button>
+  </div>
+
+  <!-- Keyboard Shortcuts Helper Tip -->
+  <div style="font-size: 0.75rem; color: var(--text-faint); margin-bottom: 1.25rem; font-family: var(--font-mono); text-align: center;">
+    Shortcuts: <strong>[Space]</strong> Play/Pause &bull; <strong>[&larr; / &rarr;]</strong> Step &bull; <strong>[A]</strong> Aspect Ratio &bull; <strong>[C]</strong> Captions &bull; <strong>[H]</strong> Hide Nav/Cursor for Clean Video Capture
+  </div>
+
+  <!-- The Story Presentation Frame -->
+  <div id="storyFrame" class="story-frame aspect-16-9">
+    <div class="story-progress-bar">
+      <div id="storyProgressFill" class="story-progress-fill"></div>
+    </div>
+
+    <!-- Slide 1: Hook -->
+    <div class="story-slide active" data-caption="What the numbers show about .si domain holding costs (illustrative). SI Scout screens .si domains with clear arithmetic and zero automated purchasing.">
+      <div style="max-width: 720px; margin: 0 auto; text-align: center;">
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary); margin-bottom: 1rem; display: inline-block;">
+          SI Scout &bull; Domain Reality Check
+        </span>
+        <h1 style="font-size: 2.35rem; font-weight: 900; line-height: 1.2; margin: 0 0 1rem 0; letter-spacing: -0.03em;">
+          What the numbers show about .si domain holding costs (illustrative)
+        </h1>
+        <p style="font-size: 1.15rem; color: var(--text-muted); margin-bottom: 1.75rem; line-height: 1.6;">
+          Secondary market liquidity for local country extensions is limited: about 52% of early Dynadot registrations were listed for resale (Netcraft), and only 2 of 35 public .si sales Jan to Jun 2026 went to end users (Domain Name Wire). Without realistic math, annual renewals compound over time.
+        </p>
+        <div style="background: var(--bg-surface-elevated); padding: 1.1rem 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.95rem; border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+          Our principle: <strong>Screening score, not a value estimate. No purchase is ever made by this tool.</strong>
+        </div>
+        <div class="source-footer" style="margin-top: 2rem;">
+          Source: Netcraft (52% resale listings), Domain Name Wire (2 of 35 sales to end users), and Register.si public counters.
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Funnel Attrition -->
+    <div class="story-slide" data-caption="Out of 100 generated candidate names, 96% are eliminated before reaching human review.">
+      <div style="max-width: 740px; margin: 0 auto;">
+        <span class="brand-badge" style="margin-bottom: 0.75rem; display: inline-block;">Step 1: Funnel Attrition</span>
+        <h2 style="font-size: 2rem; font-weight: 800; margin: 0 0 0.75rem 0; letter-spacing: -0.02em;">From 100 Candidates Down to 4 Strict Survivors</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0;">
+          <div class="metric-tile" style="text-align: center;">
+            <div class="metric-label" style="justify-content: center;">Generated</div>
+            <div class="metric-value">100</div>
+            <div class="metric-sub">Lexical ideas</div>
+          </div>
+          <div class="metric-tile" style="text-align: center;">
+            <div class="metric-label" style="justify-content: center;">Already Taken</div>
+            <div class="metric-value" style="color: var(--status-caution);">60</div>
+            <div class="metric-sub">80% of checked</div>
+          </div>
+          <div class="metric-tile" style="text-align: center;">
+            <div class="metric-label" style="justify-content: center;">Strict Survivors</div>
+            <div class="metric-value" style="color: var(--accent-primary);">4</div>
+            <div class="metric-sub">Pass all 5 stages</div>
+          </div>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
+          Over 96% attrition: length filters, brand collision checks, active site twins, and trademark screens discard the vast majority of combinations.
+        </p>
+        <div class="source-footer" style="margin-top: 1.5rem;">
+          Source file: demo_data/findings_data.json (Snapshot: 2026-10-02)
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Saturation -->
+    <div class="story-slide" data-caption="Single dictionary words are over 93% saturated in .si. Only compound blends have modest availability.">
+      <div style="max-width: 740px; margin: 0 auto;">
+        <span class="brand-badge" style="margin-bottom: 0.75rem; display: inline-block;">Step 2: Pattern Saturation</span>
+        <h2 style="font-size: 2rem; font-weight: 800; margin: 0 0 0.75rem 0; letter-spacing: -0.02em;">Single Words Are Virtually Exhausted</h2>
+        <div style="margin: 1.5rem 0; font-size: 0.95rem;">
+          <div style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <strong>Single Dictionary Words</strong>
+              <span style="color: var(--status-negative); font-weight: 800;">93.3% Registered</span>
+            </div>
+            <div style="height: 14px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border-subtle);">
+              <div style="width: 93.3%; height: 100%; background: linear-gradient(90deg, #f43f5e, #e11d48);"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <strong>Compound Blends (e.g. SynthBlend)</strong>
+              <span style="color: var(--status-positive); font-weight: 800;">25.7% Unconfirmed 404</span>
+            </div>
+            <div style="height: 14px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border-subtle);">
+              <div style="width: 25.7%; height: 100%; background: linear-gradient(90deg, #10b981, #059669);"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
+          Pure dictionary words were registered years ago. Any viable candidate today requires compound blends or affix tailoring.
+        </p>
+        <div class="source-footer" style="margin-top: 1.5rem;">
+          Source file: demo_data/findings_data.json (Sample cohort: 100 domains)
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Registry vs Registrar Calibration -->
+    <div class="story-slide" data-caption="Critical flaw in basic tools: Register.si 404 does NOT mean available. Registrars often report taken or restricted.">
+      <div style="max-width: 740px; margin: 0 auto;">
+        <span class="brand-badge" style="background: var(--status-caution); color: #fff; margin-bottom: 0.75rem; display: inline-block;">
+          Calibration Discrepancy
+        </span>
+        <h2 style="font-size: 2rem; font-weight: 800; margin: 0 0 0.75rem 0; letter-spacing: -0.02em;">Registry 404 &ne; Retail Available</h2>
+        <div style="background: var(--bg-surface-elevated); border-left: 5px solid var(--status-caution); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; border: 1px solid var(--border-subtle); border-left-width: 5px; box-shadow: var(--shadow-sm);">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary);">
+            demo-agent.si: Registry 404 &rarr; Registrar "Already Taken"
+          </div>
+          <p style="margin: 0; font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">
+            Authoritative registry RDAP returned 404 Not Found, but manual registrar checkout reported the name unavailable. Without human checkout validation, automated scanners waste money on false positives.
+          </p>
+        </div>
+        <div class="source-footer" style="margin-top: 1.5rem;">
+          Source file: demo_data/calibration.json | Human verified registrar comparisons.
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: The 6 Safety Gates -->
+    <div class="story-slide" data-caption="SI Scout enforces 6 strict gates. No name can be marked buy-ready without human registrar confirmation.">
+      <div style="max-width: 740px; margin: 0 auto;">
+        <span class="brand-badge" style="margin-bottom: 0.75rem; display: inline-block;">Gating Safeguards</span>
+        <h2 style="font-size: 2rem; font-weight: 800; margin: 0 0 0.75rem 0; letter-spacing: -0.02em;">The Six Non-Negotiable Gates</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; margin: 1.25rem 0; font-size: 0.88rem;">
+          <div style="padding: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <strong>1. Not in Registry:</strong> 404 response
+          </div>
+          <div style="padding: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <strong>2. Fresh Pricing:</strong> Snapshot &le; 7 days
+          </div>
+          <div style="padding: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <strong>3. Fresh Check:</strong> Tested &le; 60 mins
+          </div>
+          <div style="padding: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <strong>4. Human Rationale:</strong> &ge; 8 words, human
+          </div>
+          <div style="padding: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <strong>5. Budget Fit:</strong> Fits holding term cap
+          </div>
+          <div style="padding: 0.85rem; background: var(--accent-surface); border: 1px solid var(--accent-primary); border-radius: var(--radius-sm);">
+            <strong>6. Checkout Test:</strong> Accredited registrar &le; 60m
+          </div>
+        </div>
+        <div class="source-footer">
+          Enforced by si_scout/score.py and ui/gates.py. Zero automated buying.
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Budget Reality Check -->
+    <div class="story-slide" data-caption="With 5 names held over 3 years at a 2% annual sell-through, there is a 73.9% chance of selling nothing.">
+      <div style="max-width: 740px; margin: 0 auto;">
+        <span class="brand-badge" style="margin-bottom: 0.75rem; display: inline-block;">Budget Lab Arithmetic</span>
+        <h2 style="font-size: 2rem; font-weight: 800; margin: 0 0 0.75rem 0; letter-spacing: -0.02em;">73.9% Chance of Selling Zero Names</h2>
+        <div class="grid-3" style="margin: 1.5rem 0;">
+          <div class="metric-tile" style="text-align: center; border-top: 4px solid var(--status-negative);">
+            <div class="metric-label" style="justify-content: center;">Chance of 0 Sales</div>
+            <div class="metric-value" style="color: var(--status-negative);">73.9%</div>
+            <div class="metric-sub">5 names &times; 3 years</div>
+          </div>
+          <div class="metric-tile" style="text-align: center; border-top: 4px solid var(--accent-primary);">
+            <div class="metric-label" style="justify-content: center;">Carry Spend</div>
+            <div class="metric-value">€196.75</div>
+            <div class="metric-sub">At €39.35 / domain</div>
+          </div>
+          <div class="metric-tile" style="text-align: center; border-top: 4px solid var(--status-caution);">
+            <div class="metric-label" style="justify-content: center;">Expected Net</div>
+            <div class="metric-value">-€46.75</div>
+            <div class="metric-sub">Illustrative loss</div>
+          </div>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
+          Illustrative arithmetic from your inputs, not a forecast. Holding costs compound while secondary demand remains minimal.
+        </p>
+        <div class="source-footer" style="margin-top: 1.5rem;">
+          Computed by ui/static/js/budget_math.js | Binomial independent domain-years.
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Closing Summary -->
+    <div class="story-slide" data-caption="SI Scout is 100% open source. Honest screening, zero sales hype, and private local workflows.">
+      <div style="max-width: 720px; margin: 0 auto; text-align: center;">
+        <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary); margin-bottom: 1rem; display: inline-block;">
+          Open Source Release
+        </span>
+        <h2 style="font-size: 2.5rem; font-weight: 900; margin: 0 0 1rem 0; letter-spacing: -0.03em;">SI Scout</h2>
+        <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem;">
+          The calm, evidence-first research tool for .si domain evaluation.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+          <a href="/budget" class="nav-item" style="background: var(--accent-primary); color: #fff; padding: 0.75rem 1.5rem; font-weight: 700; border-radius: var(--radius-md);">Explore Budget Lab</a>
+          <a href="/name-lab" class="nav-item" style="background: var(--bg-surface-elevated); border: 1px solid var(--border-strong); padding: 0.75rem 1.5rem; font-weight: 700; border-radius: var(--radius-md);">Try Name Lab</a>
+        </div>
+        <div style="font-size: 0.88rem; color: var(--text-faint);">
+          Screening score, not a value estimate. No purchase is ever made by this tool.
+        </div>
+      </div>
+    </div>
+
+    <!-- Captions Overlay -->
+    <div id="storyCaptions" class="story-captions"></div>
+
+    <!-- Navigation Bar inside frame -->
+    <div id="storyNavBar" class="story-nav-bar">
+      <div id="slideIndexDisplay" style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;">
+        1 / 7
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">
+        Demo Mode (Synthetic Data) &bull; Zero Network Calls
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/story_player.js') }}"></script>
+{% endblock %}

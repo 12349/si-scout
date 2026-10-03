@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SI Scout — Domain Screening Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <script>
+    // Theme initialization prior to render to prevent flash
+    (function() {
+      const stored = localStorage.getItem('si_scout_theme');
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.setAttribute('data-theme', stored);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="top-navbar">
+      <div class="brand-section">
+        <a href="/" class="brand-logo">
+          <span>SI Scout</span>
+          {% if is_demo %}
+          <span class="brand-badge">DEMO</span>
+          {% else %}
+          <span class="brand-badge">LIVE</span>
+          {% endif %}
+        </a>
+      </div>
+
+      <nav class="nav-links" aria-label="Main Navigation">
+        <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">Overview / Reality Check</a>
+        <a href="/budget" class="nav-item {% if active_page == 'budget' %}active{% endif %}">Budget Lab</a>
+        <a href="/name-lab" class="nav-item {% if active_page == 'name_lab' %}active{% endif %}">Name Lab</a>
+        <a href="/funnel" class="nav-item {% if active_page == 'funnel' or active_page == 'findings' %}active{% endif %}">Funnel & Saturation</a>
+        <a href="/gates" class="nav-item {% if active_page == 'gates' %}active{% endif %}">Gate Simulator</a>
+        <a href="/candidates" class="nav-item {% if active_page == 'candidates' %}active{% endif %}">Candidates</a>
+        <a href="/calibration" class="nav-item {% if active_page == 'calibration' %}active{% endif %}">Calibration</a>
+        <a href="/watch" class="nav-item {% if active_page == 'watch' %}active{% endif %}">Watch</a>
+        <a href="/story" class="nav-item {% if active_page == 'story' %}active{% endif %}" style="color: var(--accent-primary); font-weight: 600;">Story Mode (55s)</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+          <span id="themeToggleIcon">Theme</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Permanent Demo Banner -->
+    {% if is_demo %}
+    <div class="demo-banner" role="status">
+      <div>
+        <strong style="margin-right: 0.5rem; text-transform: uppercase;">DEMO MODE:</strong>
+        <span>Demo data. Not real registry results. Demo data timestamps are fixed.</span>
+      </div>
+      <span style="font-family: var(--font-mono); font-size: 0.8rem;">Zero Network Calls</span>
+    </div>
+    {% endif %}
+
+    <!-- Loud Staleness Banners (Active only in live mode) -->
+    {% if not is_demo and freshness and not freshness.is_all_fresh %}
+    <div class="staleness-banner" role="alert">
+      <strong>FRESHNESS WARNING:</strong> {{ freshness.warnings | join(' | ') }}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Permanent Grounding Disclaimer Footer -->
+    <footer class="app-footer">
+      <div>Screening score, not a value estimate. No purchase is ever made by this tool.</div>
+      <div class="source-footer">SI Scout Open Source System — Offline Research & Screening Engine</div>
+    </footer>
+  </div>
+
+  <script>
+    // Theme toggle handling
+    const toggleBtn = document.getElementById('themeToggleBtn');
+    toggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('si_scout_theme', next);
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

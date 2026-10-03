@@ -1,0 +1,35 @@
+{
+  "source": "https://www.register.si/rezervirane-domene/",
+  "fetched_utc": "2026-09-30T19:50:00Z",
+  "status": "VERIFIED_TODAY",
+  "reserved_domains": [
+    {
+      "domain": "112.si",
+      "reason": "Rezervirano za klic v sili (Emergency 112)"
+    },
+    {
+      "domain": "113.si",
+      "reason": "Rezervirano za Policijo (Police 113)"
+    },
+    {
+      "domain": "rs.si",
+      "reason": "Rezervirano za Republiko Slovenijo (Republic of Slovenia)"
+    },
+    {
+      "domain": "si.si",
+      "reason": "Rezervirano za Republiko Slovenijo (Republic of Slovenia)"
+    },
+    {
+      "domain": "xeroxdiscoverysupernode1.si",
+      "reason": "Prepovedano zaradi ranljivosti Xerox tiskalnikov"
+    },
+    {
+      "domain": "xeroxdiscoverysupernode2.si",
+      "reason": "Prepovedano zaradi ranljivosti Xerox tiskalnikov"
+    },
+    {
+      "domain": "xeroxdiscoverysupernode3.si",
+      "reason": "Prepovedano zaradi ranljivosti Xerox tiskalnikov"
+    }
+  ]
+}

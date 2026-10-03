@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Shortlist & Budget Allocation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 4: Shortlist & Budget Stress Test</h1>
+    <div class="page-desc">Names you selected for final consideration. Compare side-by-side and monitor remaining capital.</div>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="/api/shortlist/export/markdown" class="btn btn-outline">Export Markdown</a>
+    <a href="/api/shortlist/export/csv" class="btn btn-outline">Export CSV</a>
+  </div>
+</div>
+
+<!-- Running Budget Gauges -->
+<div class="grid-4">
+  <div class="stat-card">
+    <div class="stat-label">Investable Budget</div>
+    <div class="stat-value">${{ "%.2f"|format(budget.effective_budget) }}</div>
+    <div class="stat-sub">After $20 Emergency Reserve</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Committed 3-Yr Carry</div>
+    <div class="stat-value" style="color: {% if total_committed > budget.effective_budget %}#f87171{% else %}#4ade80{% endif %};">
+      ${{ "%.2f"|format(total_committed) }}
+    </div>
+    <div class="stat-sub">{{ shortlisted_names|length }} domains shortlisted</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Remaining Budget</div>
+    <div class="stat-value" style="color: {% if remaining_cash < 0 %}#f87171{% else %}#fff{% endif %};">
+      ${{ "%.2f"|format(remaining_cash) }}
+    </div>
+    <div class="stat-sub">{% if remaining_cash < 0 %}OVER BUDGET{% else %}Available Cash{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Max Recommended Names</div>
+    <div class="stat-value">{{ budget.max_names }} names</div>
+    <div class="stat-sub">At ${{ "%.2f"|format(budget.carry_3yr_per_name) }} carry each</div>
+  </div>
+</div>
+
+{% if total_committed > budget.effective_budget %}
+<div class="card" style="background-color: var(--red-bg); border-color: var(--red-border); color: #fca5a5;">
+  <strong>BUDGET OVERFLOW WARNING:</strong>
+  Your shortlisted domains exceed the $180.00 net capital limit. Please remove at least one name to preserve your $20 reserve and stay within your $200 all-in loss limit.
+</div>
+{% endif %}
+
+<!-- Shortlisted Names Table -->
+<div class="card" style="padding: 0; overflow-x: auto; margin-bottom: 2rem;">
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Status</th>
+        <th>1-Yr Cost</th>
+        <th>3-Yr Carry</th>
+        <th>Cheapest Registrar</th>
+        <th>Human Rationale</th>
+        <th>Gate Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in shortlisted_names %}
+      <tr>
+        <td><strong style="color: var(--text-primary); font-size: 1rem;">{{ s.domain }}</strong></td>
+        <td>
+          {% if s.rdap_status == 'AVAILABLE_CANDIDATE' %}
+            <span class="badge badge-avail">NOT IN REGISTRY (unconfirmed)</span>
+          {% else %}
+            <span class="badge badge-reg">{{ s.rdap_status }}</span>
+          {% endif %}
+        </td>
+        <td>${{ "%.2f"|format(s.year1_usd) }}</td>
+        <td><strong>${{ "%.2f"|format(s.carry_3yr_usd) }}</strong></td>
+        <td>{{ s.cheapest_registrar }}</td>
+        <td style="max-width: 320px; font-size: 0.8rem;">
+          {% if s.human_rationale %}
+            {{ s.human_rationale }}
+          {% else %}
+            <span style="color: #f87171;">Missing rationale</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.is_ready %}
+            <span class="badge badge-tier-buy">&#10003; Ready</span>
+          {% else %}
+            <span class="badge badge-tier-monitor">Pending Gates</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="/detail/{{ s.domain }}" class="btn btn-outline btn-sm">Inspect</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+          Your shortlist is currently empty. Star names from <a href="/candidates">Candidates Explorer</a> or the name detail page.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Side-by-Side Comparison Grid (Up to 5 names) -->
+{% if shortlisted_names %}
+<div class="card">
+  <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">
+    Side-by-Side Comparison (Max 5 Names)
+  </h2>
+  
+  <div style="display: grid; grid-template-columns: repeat({{ [shortlisted_names|length, 5]|min }}, 1fr); gap: 1rem;">
+    {% for s in shortlisted_names[:5] %}
+    <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 6px; padding: 1rem;">
+      <h3 style="color: var(--accent); font-size: 1.1rem; margin-bottom: 0.5rem;">{{ s.domain }}</h3>
+      <div style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+        <strong>Score:</strong> {{ "%.1f"|format(s.total_score) }}/100
+      </div>
+      <div style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+        <strong>3-Yr Carry:</strong> ${{ "%.2f"|format(s.carry_3yr_usd) }}
+      </div>
+      <div style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+        <strong>Status:</strong> {{ s.rdap_status }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+        <strong>Rationale:</strong> {{ s.human_rationale or "None written yet" }}
+      </div>
+      <a href="{{ s.buy_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
+        Manual Checkout &nearr;
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

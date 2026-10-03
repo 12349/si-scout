@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}SI Scout - Drop Watch Explorer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Screen 9: Drop Watch Explorer</h1>
+    <div class="page-desc">Track all observed registered .si domains, historical registration dates, and upcoming expiration cycles.</div>
+  </div>
+  <div>
+    <a href="/watch" class="btn btn-outline">Go to Daily Watch Mode &rarr;</a>
+  </div>
+</div>
+
+<!-- Ground Truth Notice -->
+<div class="card" style="border-left: 4px solid var(--accent); background: rgba(56, 189, 248, 0.05); margin-bottom: 1.5rem;">
+  <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Expiration vs. Drop Reality</div>
+  <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0;">
+    <strong>Administrative Expiry is Not Proof of Non-Renewal:</strong> Most institutional and commercial domains auto-renew automatically.
+    A domain expiring soon indicates when to watch, not an expectation of a drop. Zero single tech words have dropped since the September 19 rush.
+  </p>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid-4" style="margin-bottom: 1.5rem;">
+  <div class="stat-card">
+    <div class="stat-label">Total Registered Observed</div>
+    <div class="stat-value">{{ drop_records|length }}</div>
+    <div class="stat-sub">Authoritative RDAP records</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Post-Sept 19 Rush</div>
+    <div class="stat-value" style="color: #fbbf24;">133</div>
+    <div class="stat-sub">38.7% of registered total</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pre-Sept 19 Legacy</div>
+    <div class="stat-value" style="color: #94a3b8;">211</div>
+    <div class="stat-sub">61.3% registered before rush</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">118 Single Words Post-Rush</div>
+    <div class="stat-value" style="color: #ef4444;">0</div>
+    <div class="stat-sub">100% taken years before 2026</div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+  <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.75rem; align-items: center;">
+    <div>
+      <input type="text" id="searchInput" placeholder="Search domain..." style="width: 100%;" oninput="applyDropFilters()">
+    </div>
+    <div>
+      <select id="timingFilter" style="width: 100%;" onchange="applyDropFilters()">
+        <option value="">All Registration Timing</option>
+        <option value="AFTER_SEPT_19_2026">Registered After Sept 19, 2026 (Rush)</option>
+        <option value="BEFORE_SEPT_19_2026">Registered Before Sept 19, 2026 (Legacy)</option>
+      </select>
+    </div>
+    <div>
+      <select id="patternFilter" style="width: 100%;" onchange="applyDropFilters()">
+        <option value="">All Patterns</option>
+        <option value="single">single word</option>
+        <option value="compound">two-word compound</option>
+        <option value="prefix_word">prefix+word</option>
+        <option value="si_affix">si-prefix/suffix</option>
+      </select>
+    </div>
+    <div>
+      <span id="matchCount" style="font-size: 0.85rem; color: var(--text-muted);">{{ drop_records|length }} domains</span>
+    </div>
+  </div>
+</div>
+
+<!-- Table Card -->
+<div class="card" style="padding: 0; overflow-x: auto;">
+  <table id="dropWatchTable">
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Pattern</th>
+        <th>Registration Date</th>
+        <th>Expiration Date</th>
+        <th>Timing Group</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      {% for r in drop_records %}
+      <tr class="drop-row" 
+          data-domain="{{ r.domain }}"
+          data-timing="{{ r.registered_timing }}"
+          data-pattern="{{ r.pattern }}">
+        <td><strong>{{ r.domain }}</strong></td>
+        <td><span class="badge badge-reg">{{ r.pattern }}</span></td>
+        <td><code>{{ r.registration_date[:10] }}</code></td>
+        <td><code>{{ r.expiration_date[:10] }}</code></td>
+        <td>
+          {% if r.registered_timing == 'AFTER_SEPT_19_2026' %}
+            <span class="badge badge-quarantine">POST-SEPT 19 RUSH</span>
+          {% else %}
+            <span class="badge badge-reg">PRE-SEPT 19 LEGACY</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          No drop watch records found. Generate <code>drop_watch.csv</code> to view records.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function applyDropFilters() {
+  const query = document.getElementById("searchInput").value.toLowerCase().trim();
+  const timing = document.getElementById("timingFilter").value;
+  const pattern = document.getElementById("patternFilter").value;
+  
+  const rows = document.querySelectorAll(".drop-row");
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const d = row.getAttribute("data-domain").toLowerCase();
+    const t = row.getAttribute("data-timing");
+    const p = row.getAttribute("data-pattern");
+    
+    let match = true;
+    if (query && !d.includes(query)) match = false;
+    if (timing && t !== timing) match = false;
+    if (pattern && p !== pattern) match = false;
+    
+    if (match) {
+      row.style.display = "";
+      visibleCount++;
+    } else {
+      row.style.display = "none";
+    }
+  });
+  
+  document.getElementById("matchCount").innerText = `${visibleCount} domains`;
+}
+</script>
+{% endblock %}

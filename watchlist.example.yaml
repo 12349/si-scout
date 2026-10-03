@@ -1,0 +1,13 @@
+# ==============================================================================
+# SI Scout - Priority Watchlist Configuration (Example)
+# Copy this file to 'watchlist.yaml' and specify domains to track daily.
+# 'watchlist.yaml' is ignored by git to protect your private monitoring targets.
+# ==============================================================================
+
+domains:
+  - domain: demo-cortex.si
+    frequency: daily
+    notes: Synthetic quarantine drop monitor
+  - domain: example-cloud.si
+    frequency: daily
+    notes: Candidate availability monitor

@@ -1,0 +1,29 @@
+{
+  "example-cloud": {
+    "label": "example-cloud",
+    "rationale": "A synthetic cloud infrastructure startup would pay $500 for this clean descriptive domain.",
+    "author": "human",
+    "self_written": true,
+    "timestamp": "2026-09-30T12:00:00Z",
+    "scarcity": 8.0,
+    "usability": 12.0
+  },
+  "demo-agent": {
+    "label": "demo-agent",
+    "rationale": "An autonomous software testing company would pay $400 because it clearly denotes agent capabilities.",
+    "author": "human",
+    "self_written": true,
+    "timestamp": "2026-09-30T12:00:00Z",
+    "scarcity": 7.0,
+    "usability": 10.0
+  },
+  "test-vector": {
+    "label": "test-vector",
+    "rationale": "A vector database engineering firm would pay $600 because it names semantic indexing systems.",
+    "author": "human",
+    "self_written": true,
+    "timestamp": "2026-09-30T12:00:00Z",
+    "scarcity": 8.0,
+    "usability": 12.0
+  }
+}

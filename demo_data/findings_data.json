@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "source_file": "demo_data/findings_data.json",
+    "generation_date_utc": "2026-10-02T16:00:00Z",
+    "is_demo": true,
+    "disclaimer": "Illustrative demo data. Not real registry results."
+  },
+  "funnel": {
+    "total_candidates_generated": 100,
+    "prefiltered_survivors": 75,
+    "registry_checked": 75,
+    "not_in_registry_404": 15,
+    "strict_survivors": 4,
+    "stage_descriptions": [
+      {
+        "stage": "1. Lexical Generator",
+        "count": 100,
+        "drop_pct": "0.0%"
+      },
+      {
+        "stage": "2. Pre-filter (Length, Hyphens, Tranco Brand Collisions)",
+        "count": 75,
+        "drop_pct": "25.0%"
+      },
+      {
+        "stage": "3. Register.si RDAP Scan (Synthetic)",
+        "count": 75,
+        "drop_pct": "0.0%"
+      },
+      {
+        "stage": "4. Registry 404 (Not In Active Registry)",
+        "count": 15,
+        "drop_pct": "80.0%"
+      },
+      {
+        "stage": "5. Strict Survivor (Clean Twins & Gated)",
+        "count": 4,
+        "drop_pct": "73.3%"
+      }
+    ]
+  },
+  "saturation_by_pattern": [
+    {
+      "pattern": "Single Dictionary Words",
+      "checked": 25,
+      "registered": 24,
+      "not_in_registry": 1,
+      "survival_rate_pct": 4.0
+    },
+    {
+      "pattern": "Compound Blends (e.g. SynthBlend)",
+      "checked": 30,
+      "registered": 22,
+      "not_in_registry": 8,
+      "survival_rate_pct": 26.7
+    },
+    {
+      "pattern": "Prefix / Suffix Affixes",
+      "checked": 15,
+      "registered": 11,
+      "not_in_registry": 4,
+      "survival_rate_pct": 26.7
+    },
+    {
+      "pattern": "Short Acronyms (3-4 Chars)",
+      "checked": 5,
+      "registered": 3,
+      "not_in_registry": 2,
+      "survival_rate_pct": 40.0
+    }
+  ]
+}

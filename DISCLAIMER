@@ -1,0 +1,29 @@
+DISCLAIMER
+==========
+
+1. INDEPENDENT PROJECT
+SI Scout is an independent open-source research and educational software project.
+It is NOT affiliated with, sponsored by, authorized by, or endorsed by Register.si,
+the Academic and Research Network of Slovenia (ARNES), ICANN, or any accredited
+domain registrar (including Dynadot, Hostinger, Domenca, or others).
+
+2. NO GUARANTEE OF REGISTRABILITY OR ACCURACY
+All registry status indicators, availability determinations, and zone count snapshots
+are based on external data sources and automated queries. An HTTP 404 response from an
+RDAP endpoint indicates that a domain object was not located in the registry at query time;
+it does NOT constitute a legal guarantee that the domain is registrable, unreserved,
+or free of legal encumbrances. Registrability, premium tier surcharges, and trademark
+clearance can only be determined at final registrar checkout.
+
+3. NO FINANCIAL OR INVESTMENT ADVICE
+Nothing contained in this software, documentation, reports, user interface, or generated
+artifacts constitutes financial, legal, trademark, or investment advice. Any screening
+scores or heuristic rankings represent structural filters and experimental models.
+Users bear sole responsibility for their domain acquisition decisions and compliance
+with applicable laws.
+
+4. "AS IS" WARRANTY DISCLAIMER
+This software is provided "as is", without warranty of any kind, express or implied,
+including but not limited to the warranties of merchantability, fitness for a particular
+purpose, and noninfringement. In no event shall the authors or copyright holders be liable
+for any claim, damages, or other liability arising from the use of this software.

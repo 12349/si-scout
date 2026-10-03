@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "domain": "example-cloud.si",
+    "registry_status": "404 Not Found",
+    "registry_time_utc": "2026-09-30T12:00:00Z",
+    "registry_recheck_time": "2026-09-30T12:05:00Z",
+    "registrar_name": "Registrar A",
+    "registrar_result": "available",
+    "registrar_time_utc": "2026-09-30T12:04:00Z",
+    "delta_minutes": 4.0,
+    "delta_minutes_registry_to_registrar": 4.0,
+    "agrees": true,
+    "author": "human",
+    "notes": "Synthetic demo check: confirmed proceeds to cart"
+  },
+  {
+    "id": 2,
+    "domain": "demo-agent.si",
+    "registry_status": "404 Not Found",
+    "registry_time_utc": "2026-09-30T12:10:00Z",
+    "registry_recheck_time": "2026-09-30T12:15:00Z",
+    "registrar_name": "Registrar B",
+    "registrar_result": "already taken",
+    "registrar_time_utc": "UNKNOWN",
+    "delta_minutes": "UNKNOWN",
+    "delta_minutes_registry_to_registrar": "UNKNOWN",
+    "agrees": false,
+    "author": "human",
+    "notes": "Synthetic demo check: registrar reported already registered"
+  },
+  {
+    "id": 3,
+    "domain": "sample-nexus.si",
+    "registry_status": "200 Active",
+    "registry_time_utc": "2026-09-30T12:20:00Z",
+    "registry_recheck_time": "UNKNOWN",
+    "registrar_name": "Registrar B",
+    "registrar_result": "already taken",
+    "registrar_time_utc": "2026-09-30T12:22:00Z",
+    "delta_minutes": 2.0,
+    "delta_minutes_registry_to_registrar": 2.0,
+    "agrees": true,
+    "author": "human",
+    "notes": "Synthetic demo check: registry and registrar agree domain is taken"
+  },
+  {
+    "id": 4,
+    "domain": "test-synth.si",
+    "registry_status": "404 Not Found",
+    "registry_time_utc": "2026-09-30T12:30:00Z",
+    "registry_recheck_time": "UNKNOWN",
+    "registrar_name": "Registrar C",
+    "registrar_result": "registry busy / could not confirm",
+    "registrar_time_utc": "2026-09-30T12:32:00Z",
+    "delta_minutes": 2.0,
+    "delta_minutes_registry_to_registrar": 2.0,
+    "agrees": false,
+    "author": "human",
+    "notes": "Synthetic demo check: temporary EPP registry timeout; retry permitted"
+  }
+]

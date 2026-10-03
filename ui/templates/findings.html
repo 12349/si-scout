@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Screening Funnel Attrition & Saturation — SI Scout{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <div>
+      <h1 class="card-title" style="font-size: 1.5rem;">Screening Funnel Attrition</h1>
+      <p class="card-subtitle">Empirical attrition rates through lexical generation, pre-filtering, and Register.si verification.</p>
+    </div>
+    {% if is_demo %}
+    <span class="brand-badge" style="background: var(--accent-surface); color: var(--accent-primary);">
+      Illustrative demo data
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- SVG Animated Funnel Visualization -->
+  <div style="margin: 1.5rem 0; overflow-x: auto;">
+    <svg viewBox="0 0 800 240" style="width: 100%; max-width: 800px; height: auto; font-family: var(--font-mono); margin: 0 auto; display: block;">
+      <!-- Step 1: Lexical Generator -->
+      <polygon points="40,20 760,20 710,60 90,60" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5"/>
+      <text x="400" y="45" text-anchor="middle" fill="var(--text-primary)" font-size="13" font-weight="600">1. Lexical Generator: {{ findings.funnel.total_candidates_generated }} candidates (100%)</text>
+
+      <!-- Step 2: Pre-filter -->
+      <polygon points="90,65 710,65 650,105 150,105" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5"/>
+      <text x="400" y="90" text-anchor="middle" fill="var(--text-primary)" font-size="13" font-weight="600">2. Pre-filter (Length, Hyphens, Tranco Collisions): {{ findings.funnel.prefiltered_survivors }} (75.0%)</text>
+
+      <!-- Step 3: Registry Check -->
+      <polygon points="150,110 650,110 570,150 230,150" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5"/>
+      <text x="400" y="135" text-anchor="middle" fill="var(--text-primary)" font-size="13" font-weight="600">3. Authoritative Register.si RDAP Scan: {{ findings.funnel.registry_checked }} checked</text>
+
+      <!-- Step 4: NOT IN REGISTRY -->
+      <polygon points="230,155 570,155 490,195 310,195" fill="var(--heat-gain-mild)" stroke="var(--status-positive)" stroke-width="1.5"/>
+      <text x="400" y="180" text-anchor="middle" fill="var(--status-positive)" font-size="13" font-weight="700">4. NOT IN REGISTRY (404): {{ findings.funnel.not_in_registry_404 }} (15.0%)</text>
+
+      <!-- Step 5: Strict Survivors -->
+      <polygon points="310,200 490,200 450,235 350,235" fill="var(--accent-surface)" stroke="var(--accent-primary)" stroke-width="2"/>
+      <text x="400" y="222" text-anchor="middle" fill="var(--accent-primary)" font-size="13" font-weight="800">5. Strict Survivors: {{ findings.funnel.strict_survivors }} names (4.0%)</text>
+    </svg>
+  </div>
+
+  <div class="source-footer">
+    Source file: {{ findings.funnel.source_file }} | Build snapshot: {{ findings.funnel.generation_date }}
+  </div>
+</div>
+
+<!-- Saturation by Pattern Section -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Saturation by Pattern</h2>
+      <p class="card-subtitle">Exhaustion comparison across dictionary words, compound blends, and affixes.</p>
+    </div>
+    <span class="brand-badge">Categorical Breakdown</span>
+  </div>
+
+  <div style="overflow-x: auto; margin-top: 1rem;">
+    <table class="heatmap-table" style="font-family: var(--font-sans);">
+      <thead>
+        <tr>
+          <th style="text-align: left;">Naming Pattern</th>
+          <th>Checked</th>
+          <th>Registered</th>
+          <th>Not In Registry</th>
+          <th>Survival Rate (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in findings.saturation.patterns %}
+        <tr>
+          <td style="text-align: left; font-weight: 600;">{{ row.pattern }}</td>
+          <td>{{ row.checked }}</td>
+          <td>{{ row.registered }}</td>
+          <td style="color: var(--status-positive); font-weight: 700;">{{ row.not_in_registry }}</td>
+          <td style="font-family: var(--font-mono); font-weight: 700;">{{ row.survival_rate_pct }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="source-footer" style="margin-top: 1rem;">
+    Source file: {{ findings.saturation.source_file }} | Saturation metrics calculated offline from sample cohorts.
+  </div>
+</div>
+
+<!-- Registry Counter Observation -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <h3 class="card-title">Register.si Public Counter Velocity</h3>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">Observation</span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0.5rem;">
+    Captures daily snapshots of Register.si's public counter. Shows whether the rush continues, not a prediction.
+  </p>
+  <div class="source-footer">
+    Source file: {{ findings.counter.source_file }} | Historical counter deltas.
+  </div>
+</div>
+
+<!-- Registrar-vs-Registry Calibration Warning Note -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Registrar-vs-Registry Calibration</h3>
+    <span class="brand-badge" style="background: var(--status-caution); color: #fff;">Important Discrepancy</span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem;">
+    A registry 404 response does NOT confirm retail domain availability. In calibration testing, registrar checkout pages reported domains as "already taken" or restricted despite registry 404 status.
+  </p>
+  <a href="/calibration" style="font-weight: 600; color: var(--accent-primary);">View Registrar Calibration Comparisons &rarr;</a>
+  <div class="source-footer" style="margin-top: 0.75rem;">
+    Source file: {{ findings.calibration.source_file }} | Human verified checkout records.
+  </div>
+</div>
+{% endblock %}
