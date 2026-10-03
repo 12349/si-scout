@@ -66,12 +66,11 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
     is_demo = app.config.get("DEMO", False) or ("--demo" in sys.argv)
     app.config["DEMO"] = is_demo
     if is_demo:
-        demo_dir = app.config.get("DEMO_DIR", REPO_ROOT / "demo_data")
-        try:
-            from scripts.generate_demo_data import ensure_demo_databases
-            ensure_demo_databases(demo_dir)
-        except Exception as e:
-            logger.warning(f"Could not auto-generate demo databases: {e}")
+        from ui.demo_env import get_demo_dir
+        demo_dir = get_demo_dir(app.config.get("DEMO_DIR"))
+        app.config["DEMO_DIR"] = demo_dir
+    else:
+        demo_dir = None
 
     csv_path = app.config.get("CSV_PATH", Path("results.csv"))
     db_path = app.config.get("DB_PATH", Path("scout.db"))
@@ -84,8 +83,14 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
             db_path=db_path if not is_demo else None,
             portfolio_db_path=portfolio_db_path if not is_demo else None,
             rationales_path=rationales_path if not is_demo else None,
-            is_demo=is_demo
+            is_demo=is_demo,
+            demo_dir=demo_dir
         )
+
+    @app.errorhandler(500)
+    def handle_500_error(e):
+        logger.error(f"Internal server error: {e}", exc_info=True)
+        return ("Internal Server Error", 500)
 
     @app.context_processor
     def inject_global_vars():

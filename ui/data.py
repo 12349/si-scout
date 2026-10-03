@@ -30,18 +30,13 @@ class UIDataManager:
                  is_demo: bool = False,
                  demo_dir: Optional[Path] = None):
         self.is_demo = is_demo
-        self.demo_dir = demo_dir or Path("demo_data")
 
         if is_demo:
+            from ui.demo_env import get_demo_dir
+            self.demo_dir = get_demo_dir(demo_dir)
             self.csv_path = csv_path or (self.demo_dir / "results.csv")
             self.db_path = db_path or (self.demo_dir / "scout.db")
             self.portfolio_db_path = portfolio_db_path or (self.demo_dir / "portfolio.db")
-            if not self.db_path.exists() or not self.portfolio_db_path.exists():
-                try:
-                    from scripts.generate_demo_data import ensure_demo_databases
-                    ensure_demo_databases(self.demo_dir)
-                except Exception as e:
-                    logger.warning(f"Could not auto-generate demo databases: {e}")
             self.rationales_path = rationales_path or (self.demo_dir / "rationales.json")
             self.confirmations_path = self.demo_dir / "registrar_confirmations.json"
             self.calibration_path = self.demo_dir / "calibration.json"
@@ -49,6 +44,7 @@ class UIDataManager:
             self.watch_log_path = self.demo_dir / "watch_log.csv"
             self.findings_path = self.demo_dir / "findings_data.json"
         else:
+            self.demo_dir = demo_dir or Path("demo_data")
             self.csv_path = csv_path or Path("results.csv")
             self.db_path = db_path or Path("scout.db")
             self.portfolio_db_path = portfolio_db_path or Path("portfolio.db")
@@ -67,15 +63,19 @@ class UIDataManager:
         if not self.db_path.exists():
             return None
         try:
-            # Read-only URI
-            uri = f"file:{self.db_path.resolve().as_posix()}?mode=ro"
+            # Read-only URI with immutable=1 for read-only filesystem compatibility
+            uri = f"file:{self.db_path.resolve().as_posix()}?mode=ro&immutable=1"
             return sqlite3.connect(uri, uri=True)
         except Exception:
             try:
-                return sqlite3.connect(self.db_path)
-            except Exception as e:
-                logger.error(f"Cannot open scout.db: {e}")
-                return None
+                uri = f"file:{self.db_path.resolve().as_posix()}?mode=ro"
+                return sqlite3.connect(uri, uri=True)
+            except Exception:
+                try:
+                    return sqlite3.connect(self.db_path)
+                except Exception as e:
+                    logger.error(f"Cannot open scout.db: {e}")
+                    return None
 
     def get_candidates_df(self) -> pd.DataFrame:
         """Reads results.csv safely and merges with shortlist state."""

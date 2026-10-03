@@ -6,80 +6,116 @@ Stored separately in portfolio.db, completely distinct from scanner cache.
 
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+import logging
+import os
 from pathlib import Path
 import sqlite3
+import tempfile
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 class PortfolioStore:
     def __init__(self, db_path: Optional[Path] = None):
-        self.db_path = db_path or Path("portfolio.db")
+        target = Path(db_path) if db_path else Path("portfolio.db")
+        if str(target) != ":memory:":
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                probe = target.parent / f".probe_{os.getpid()}"
+                probe.write_text("1", encoding="utf-8")
+                probe.unlink()
+            except (OSError, PermissionError):
+                # Fallback to writable temporary location
+                target = Path(tempfile.gettempdir()) / "si_scout_portfolio.db"
+        self.db_path = target
         self._init_db()
 
     @contextmanager
     def _get_connection(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = None
         try:
+            if str(self.db_path) != ":memory:":
+                try:
+                    self.db_path.parent.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    pass
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
             yield conn
+        except sqlite3.OperationalError:
+            try:
+                conn = sqlite3.connect(":memory:")
+                conn.row_factory = sqlite3.Row
+                yield conn
+            except Exception:
+                raise
         finally:
-            conn.close()
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
     def _init_db(self):
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS portfolio_items (
-                    domain TEXT PRIMARY KEY,
-                    purchase_date TEXT NOT NULL,
-                    price_paid REAL NOT NULL,
-                    registrar TEXT NOT NULL,
-                    renewal_date TEXT NOT NULL,
-                    refund_deadline TEXT NOT NULL,
-                    asking_price REAL,
-                    status TEXT DEFAULT 'HOLDING',
-                    notes TEXT
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS inquiries (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    domain TEXT NOT NULL,
-                    inquiry_date TEXT NOT NULL,
-                    inquirer TEXT NOT NULL,
-                    offer_usd REAL,
-                    notes TEXT
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS outreach_log (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    company TEXT NOT NULL,
-                    contact_person TEXT,
-                    date_contacted TEXT NOT NULL,
-                    reply_status TEXT DEFAULT 'PENDING',
-                    notes TEXT
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS shortlist (
-                    domain TEXT PRIMARY KEY,
-                    added_utc TEXT NOT NULL,
-                    notes TEXT
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS kill_criteria (
-                    id INTEGER PRIMARY KEY,
-                    contract_text TEXT NOT NULL,
-                    updated_utc TEXT NOT NULL
-                )
-            """)
-            # Initialize default kill criteria if missing
-            cursor.execute("SELECT COUNT(*) FROM kill_criteria")
-            if cursor.fetchone()[0] == 0:
-                default_text = "If by the first renewal cycle (Sept–Oct 2027) I have received zero inbound inquiries and observed no comparable end-user sales, I will not renew any names and cap loss at the initial purchase price."
-                cursor.execute("INSERT INTO kill_criteria (id, contract_text, updated_utc) VALUES (1, ?, ?)",
-                               (default_text, datetime.now(timezone.utc).isoformat()))
-            conn.commit()
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS portfolio_items (
+                        domain TEXT PRIMARY KEY,
+                        purchase_date TEXT NOT NULL,
+                        price_paid REAL NOT NULL,
+                        registrar TEXT NOT NULL,
+                        renewal_date TEXT NOT NULL,
+                        refund_deadline TEXT NOT NULL,
+                        asking_price REAL,
+                        status TEXT DEFAULT 'HOLDING',
+                        notes TEXT
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS inquiries (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        domain TEXT NOT NULL,
+                        inquiry_date TEXT NOT NULL,
+                        inquirer TEXT NOT NULL,
+                        offer_usd REAL,
+                        notes TEXT
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS outreach_log (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company TEXT NOT NULL,
+                        contact_person TEXT,
+                        date_contacted TEXT NOT NULL,
+                        reply_status TEXT DEFAULT 'PENDING',
+                        notes TEXT
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS shortlist (
+                        domain TEXT PRIMARY KEY,
+                        added_utc TEXT NOT NULL,
+                        notes TEXT
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS kill_criteria (
+                        id INTEGER PRIMARY KEY,
+                        contract_text TEXT NOT NULL,
+                        updated_utc TEXT NOT NULL
+                    )
+                """)
+                # Initialize default kill criteria if missing
+                cursor.execute("SELECT COUNT(*) FROM kill_criteria")
+                if cursor.fetchone()[0] == 0:
+                    default_text = "If by the first renewal cycle (Sept–Oct 2027) I have received zero inbound inquiries and observed no comparable end-user sales, I will not renew any names and cap loss at the initial purchase price."
+                    cursor.execute("INSERT INTO kill_criteria (id, contract_text, updated_utc) VALUES (1, ?, ?)",
+                                   (default_text, datetime.now(timezone.utc).isoformat()))
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"PortfolioStore _init_db non-fatal: {e}")
 
     # Shortlist operations
     def get_shortlist(self) -> List[Dict]:
