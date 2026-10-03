@@ -101,9 +101,13 @@ class TwinAnalyzer:
             conn.commit()
 
     def check_twin(self, domain: str) -> Tuple[TwinStatus, str]:
-        """Resolves DNS and probes HTTP to classify status."""
+        import ipaddress
+
         try:
             ip = socket.gethostbyname(domain)
+            parsed_ip = ipaddress.ip_address(ip)
+            if parsed_ip.is_private or parsed_ip.is_loopback or parsed_ip.is_link_local or parsed_ip.is_reserved or not parsed_ip.is_global:
+                return TwinStatus.UNKNOWN, f"DNS resolved to non-public/private IP ({ip})"
         except (socket.gaierror, OSError):
             return TwinStatus.UNREGISTERED, "DNS NXDOMAIN"
         except Exception as e:
@@ -119,12 +123,16 @@ class TwinAnalyzer:
         try:
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             url = f"http://{domain}"
-            resp = requests.get(url, headers=headers, timeout=self.timeout, allow_redirects=True)
+            resp = requests.get(url, headers=headers, timeout=self.timeout, allow_redirects=False)
             text_lower = resp.text.lower()[:15000]
 
             for kw in PARKING_KEYWORDS:
                 if kw in text_lower:
                     return TwinStatus.PARKED_OR_FOR_SALE, f"Detected parking phrase: '{kw}'"
+
+            if resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("Location", "")[:60]
+                return TwinStatus.ACTIVE_SITE, f"HTTP {resp.status_code} Redirect: {location}"
 
             if resp.status_code == 200:
                 title_match = re.search(r'<title[^>]*>(.*?)</title>', resp.text, re.IGNORECASE | re.DOTALL)

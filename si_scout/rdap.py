@@ -148,6 +148,22 @@ class RDAPClient:
         label = parts[0]
         tld = parts[1] if len(parts) > 1 else "si"
 
+        from si_scout.validator import validate_si_label
+        is_valid, reason = validate_si_label(label)
+        if not is_valid or tld != "si":
+            return RDAPResult(
+                domain=domain,
+                label=label,
+                tld=tld,
+                status=RDAPStatus.UNCERTAIN,
+                http_status_code=400,
+                raw_statuses=[],
+                raw_json=None,
+                checked_utc=datetime.now(timezone.utc).isoformat(),
+                source=self.rdap_base,
+                notes=f"Invalid .si domain syntax: {reason}" if not is_valid else "Non-.si TLD rejected"
+            )
+
         if not force_refresh:
             cached = self._get_from_cache(domain)
             if cached:

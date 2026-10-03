@@ -104,3 +104,5 @@ Thumbs.db
 demo_data/scout.db*
 demo_data/portfolio.db*
 !ui/templates/portfolio.html
+
+.vercel

@@ -18,6 +18,8 @@ import json
 import logging
 import os
 import queue
+import re
+import secrets
 import subprocess
 import threading
 from typing import Dict, Optional
@@ -37,7 +39,26 @@ SCAN_LOG_QUEUE: "queue.Queue[str]" = queue.Queue()
 
 def create_app(test_config: Optional[Dict] = None) -> Flask:
     app = Flask(__name__, template_folder="templates")
-    app.config["SECRET_KEY"] = "si-scout-local-secret"
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+
+    @app.before_request
+    def verify_same_origin():
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            origin = request.headers.get("Origin")
+            referer = request.headers.get("Referer")
+            host = request.host
+            allowed_prefixes = (f"http://{host}", f"https://{host}", "http://127.0.0.1", "http://localhost")
+            if origin and not any(origin.startswith(p) for p in allowed_prefixes):
+                return jsonify({"error": "Cross-origin request rejected"}), 403
+            if not origin and referer and not any(referer.startswith(p) for p in allowed_prefixes):
+                return jsonify({"error": "Cross-origin referer rejected"}), 403
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+        return response
 
     if test_config:
         app.config.update(test_config)
@@ -487,11 +508,20 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
             SCAN_RUNNING = True
 
         data = request.get_json() or {}
-        top = int(data.get("top", 20))
+        try:
+            raw_top = int(data.get("top", 20))
+        except (ValueError, TypeError):
+            raw_top = 20
+        top = max(1, min(raw_top, 100))
         extra = str(data.get("extra", "")).strip()
+        if extra and not re.match(r'^[a-z0-9,\-]+$', extra):
+            with SCAN_LOCK:
+                SCAN_RUNNING = False
+            return jsonify({"success": False, "error": "Invalid characters in extra names. Allowed: a-z, 0-9, hyphen, comma."}), 400
         skip_twins = bool(data.get("skip_twins", True))
 
-        cmd = [sys.executable, "si_agent.py", "--top", str(top)]
+        script_path = str((REPO_ROOT / "si_agent.py").resolve())
+        cmd = [sys.executable, script_path, "--top", str(top)]
         if extra:
             cmd.extend(["--extra", extra])
         if skip_twins:
