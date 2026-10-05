@@ -7,10 +7,10 @@
 import { calculateBudgetModel, generateSensitivityMatrix, generateSummarySentence } from './budget_math.js';
 
 const PRESETS = {
-  dynadot: { name: 'Dynadot (Dated snapshot: 2026-09-30)', firstYear: 12.13, renewal: 13.61 },
-  hostinger: { name: 'Hostinger (Dated snapshot: 2026-09-30)', firstYear: 11.99, renewal: 16.99 },
-  domovanje: { name: 'Domovanje (Dated snapshot: 2026-09-30)', firstYear: 16.90, renewal: 16.90 },
-  custom: { name: 'Custom values', firstYear: 12.13, renewal: 13.61 },
+  dynadot: { name: 'Dynadot (Dated snapshot: 2026-09-30)', firstYear: 12.13, renewal: 13.61, currency: 'USD' },
+  hostinger: { name: 'Hostinger (Dated snapshot: 2026-09-30)', firstYear: 11.99, renewal: 16.99, currency: 'USD' },
+  domovanje: { name: 'Domovanje (Dated snapshot: 2026-09-30)', firstYear: 16.90, renewal: 16.90, currency: 'EUR' },
+  custom: { name: 'Custom values', firstYear: 12.13, renewal: 13.61, currency: 'USD' },
 };
 
 function parseQueryState() {
@@ -26,7 +26,7 @@ function parseQueryState() {
     domainCount: params.has('names') ? parseInt(params.get('names'), 10) : 5,
     annualSellThroughPct: params.has('st') ? parseFloat(params.get('st')) : 2.0,
     netSalePrice: params.has('price') ? parseFloat(params.get('price')) : 500,
-    currency: params.has('currency') ? params.get('currency') : 'EUR',
+    currency: params.has('currency') ? params.get('currency') : 'USD',
     exchangeRate: params.has('fx') ? parseFloat(params.get('fx')) : 1.0,
   };
 }

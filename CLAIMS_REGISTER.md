@@ -13,8 +13,9 @@ In accordance with Rule 1 of release hardening, every claim is classified as:
 
 | Claim / Observation | Source | Date | Status | Where Displayed |
 |:---|:---|:---|:---|:---|
-| About 52% of early Dynadot .si registrations were listed for resale | Netcraft Report on .si Domain Spike | 2026 | CITED | Story Mode Slide 1, README.md |
-| 2 of 35 public .si domain sales Jan–Jun 2026 went to end users | Domain Name Wire .si Secondary Market Review | 2026 | CITED | Story Mode Slide 1, LIMITATIONS.md |
+| About 52% of Dynadot's .si registrations between Sept 19 and 22, 2026 were listed for resale | Netcraft Report on .si Domain Spike | Sept 2026 | CITED | Story Mode Slide 1, README.md |
+| 2 of 35 public .si domain sales Jan–Jun 9, 2026 went to end users | Domain Name Wire .si Secondary Market Review | Jun 2026 | CITED | Story Mode Slide 1, Budget Lab, LIMITATIONS.md |
+| Under Budget Lab default assumptions, most outcomes lose carry cost | Mathematical Sensitivity Matrix | 2026 | COMPUTED | Overview Page, Budget Lab |
 | Typical annual sell-through rates for curated portfolios are 1–3% | Domain-investing guides (Namecheap & Name.com curated .com guides) | 2024–2026 | CITED / HYPOTHESIS | Budget Lab, LIMITATIONS.md |
 | Register.si total domain registration counters | Register.si Public Counters | Daily | COMPUTED | Watch Mode, Funnel Page |
 

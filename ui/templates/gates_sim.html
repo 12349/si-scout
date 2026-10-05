@@ -52,101 +52,22 @@
 
   <!-- The 6 Interlock Cards -->
   <div style="display: flex; flex-direction: column; gap: 1rem;">
-    <!-- Gate 1 -->
-    <div class="gate-card" id="cardGate1">
+    {% for g in six_gates %}
+    <div class="gate-card" id="cardGate{{ g.id }}">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
         <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate1" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
+          <input type="checkbox" id="toggleGate{{ g.id }}" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
           <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 1: NOT IN REGISTRY (Unconfirmed)</strong>
+            <strong style="font-size: 1.1rem; color: var(--text-primary);">{{ g.title }}</strong>
             <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              The authoritative Register.si RDAP query returned HTTP 404. Note: this only proves the registry has no active delegation record; it does NOT verify registrar retail availability.
+              {{ g.full_desc }}
             </p>
           </div>
         </label>
-        <span class="gate-status-pill brand-badge" id="pillGate1">FAIL</span>
+        <span class="gate-status-pill brand-badge" id="pillGate{{ g.id }}">FAIL</span>
       </div>
     </div>
-
-    <!-- Gate 2 -->
-    <div class="gate-card" id="cardGate2">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate2" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
-          <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 2: Fresh Registrar Pricing (&le; 7 Days)</strong>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              Active registrar fee snapshots must be verified within the past 7 days. Stale price quotes block buy candidate status to prevent hidden renewal fee inflation.
-            </p>
-          </div>
-        </label>
-        <span class="gate-status-pill brand-badge" id="pillGate2">FAIL</span>
-      </div>
-    </div>
-
-    <!-- Gate 3 -->
-    <div class="gate-card" id="cardGate3">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate3" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
-          <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 3: Fresh Registry Check (&le; 60 Minutes)</strong>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              A domain check timestamp older than 60 minutes is considered stale for buying decisions. Fast automated drops or competing grabs require recent verification.
-            </p>
-          </div>
-        </label>
-        <span class="gate-status-pill brand-badge" id="pillGate3">FAIL</span>
-      </div>
-    </div>
-
-    <!-- Gate 4 -->
-    <div class="gate-card" id="cardGate4">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate4" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
-          <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 4: Human Written Rationale (&ge; 15 Words, Non-AI)</strong>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              Requires a human operator to enter a specific justification sentence (&ge; 15 words) and check the "Written by human, not AI" confirmation. Auto-generated rationale is blocked.
-            </p>
-          </div>
-        </label>
-        <span class="gate-status-pill brand-badge" id="pillGate4">FAIL</span>
-      </div>
-    </div>
-
-    <!-- Gate 5 -->
-    <div class="gate-card" id="cardGate5">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate5" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
-          <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 5: Budget Fit & Holding Carry Allocation</strong>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              Total carry costs (registration + renewals across planned holding years) must fit within the user's allocated budget ceiling after reserve deductions.
-            </p>
-          </div>
-        </label>
-        <span class="gate-status-pill brand-badge" id="pillGate5">FAIL</span>
-      </div>
-    </div>
-
-    <!-- Gate 6 -->
-    <div class="gate-card" id="cardGate6">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-        <label style="display: flex; gap: 1rem; cursor: pointer; align-items: flex-start; flex: 1;">
-          <input type="checkbox" id="toggleGate6" style="width: 1.35rem; height: 1.35rem; margin-top: 0.15rem; accent-color: var(--status-positive); cursor: pointer;">
-          <div>
-            <strong style="font-size: 1.1rem; color: var(--text-primary);">Gate 6: Registrar Checkout Confirmation (&le; 60 Minutes)</strong>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
-              A human must manually test the domain in an accredited registrar's shopping cart, record the registrar name, UTC timestamp, and result ("available"). Expires strictly after 60 minutes.
-            </p>
-          </div>
-        </label>
-        <span class="gate-status-pill brand-badge" id="pillGate6">FAIL</span>
-      </div>
-    </div>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

@@ -1,3 +1,4 @@
+from si_scout.gates_constants import SIX_GATES
 """
 SI Scout Local Dashboard Application.
 Runs locally bound to 127.0.0.1:8501 only.
@@ -41,6 +42,22 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
     app = Flask(__name__, template_folder="templates")
     app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
+
+    RATE_LIMIT_STORE: Dict[str, list] = {}
+    RATE_LIMIT_LOCK = threading.Lock()
+
+    @app.before_request
+    def check_rate_limit():
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
+        import time
+        now = time.time()
+        with RATE_LIMIT_LOCK:
+            timestamps = [t for t in RATE_LIMIT_STORE.get(ip, []) if now - t < 60.0]
+            if len(timestamps) >= 60:
+                return jsonify({"error": "Rate limit exceeded (max 60 requests/minute). Please slow down."}), 429
+            timestamps.append(now)
+            RATE_LIMIT_STORE[ip] = timestamps
+
     @app.before_request
     def verify_same_origin():
         if request.method in ("POST", "PUT", "DELETE", "PATCH"):
@@ -63,7 +80,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
     if test_config:
         app.config.update(test_config)
 
-    is_demo = app.config.get("DEMO", False) or ("--demo" in sys.argv)
+    is_hosted_demo = bool(os.environ.get("VERCEL") or os.environ.get("HOSTED_DEMO") or app.config.get("HOSTED_DEMO"))
+    is_demo = app.config.get("DEMO", False) or ("--demo" in sys.argv) or is_hosted_demo
+    app.config["HOSTED_DEMO"] = is_hosted_demo
     app.config["DEMO"] = is_demo
     if is_demo:
         from ui.demo_env import get_demo_dir
@@ -95,7 +114,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
     @app.context_processor
     def inject_global_vars():
         return {
-            "is_demo": is_demo
+            "is_demo": is_demo,
+            "is_hosted_demo": is_hosted_demo,
+            "six_gates": SIX_GATES
         }
 
     # 1. Overview Screen
@@ -354,6 +375,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/calibration/add", methods=["POST"])
     def api_calibration_add():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         domain = data.get("domain", "")
         registry_status = data.get("registry_status", "404 Not Found")
@@ -387,6 +411,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/confirm-checkout", methods=["POST"])
     def api_confirm_checkout():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         domain = data.get("domain", "")
         registrar = data.get("registrar", "")
@@ -455,6 +482,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
     # API Endpoints
     @app.route("/api/shortlist/toggle", methods=["POST"])
     def api_shortlist_toggle():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         domain = data.get("domain", "")
         if not domain:
@@ -465,6 +495,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/rationale/save", methods=["POST"])
     def api_rationale_save():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         label = data.get("label", "")
         rationale = data.get("rationale", "")
@@ -478,6 +511,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/recheck", methods=["POST"])
     def api_recheck():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         if is_demo:
             return jsonify({"success": False, "error": "Recheck disabled in demo mode. Running offline with synthetic fixtures."}), 400
         data = request.get_json() or {}
@@ -492,6 +528,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/watch/run", methods=["POST"])
     def api_watch_run():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         if is_demo:
             return jsonify({"success": False, "error": "Live watch disabled in demo mode. Running offline with synthetic fixtures."}), 400
         from si_scout.watch import WatchEngine
@@ -504,6 +543,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/scan/start", methods=["POST"])
     def api_scan_start():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         if is_demo:
             return jsonify({"success": False, "error": "Scanning disabled in demo mode. Running offline with synthetic fixtures."}), 400
         global SCAN_RUNNING, SCAN_LOG_QUEUE
@@ -572,6 +614,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/portfolio/add", methods=["POST"])
     def api_portfolio_add():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         domain = data.get("domain", "")
         date = data.get("purchase_date", "")
@@ -583,6 +628,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/outreach/add", methods=["POST"])
     def api_outreach_add():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         mgr = get_manager()
         mgr.portfolio.add_outreach(
@@ -596,6 +644,9 @@ def create_app(test_config: Optional[Dict] = None) -> Flask:
 
     @app.route("/api/portfolio/kill-criteria", methods=["POST"])
     def api_kill_criteria():
+        if is_hosted_demo:
+            return jsonify({"success": False, "error": "Disabled in hosted demo. Running in read-only demonstration mode."}), 403
+
         data = request.get_json() or {}
         mgr = get_manager()
         mgr.portfolio.update_kill_criteria(data.get("contract_text", ""))

@@ -1,6 +1,6 @@
 # SI Scout
 
-SI Scout is an open-source, offline-first research workbench and heuristic screening engine for the `.si` (Slovenia) top-level domain namespace. Built for researchers, engineers, and defensive brand managers, it evaluates lexical patterns against authoritative RDAP registry data, enforces strict economic budget constraints (such as a $200 total 3-year loss ceiling), and mandates manual human rationale and registrar checkout verification before any domain can be shortlisted.
+SI Scout is an open-source, offline-first research workbench and heuristic screening engine for the `.si` (Slovenia) top-level domain namespace. Built for researchers and engineers, it evaluates lexical patterns against authoritative RDAP registry data, enforces strict economic budget constraints (such as a $200 total 3-year loss ceiling), and mandates manual human rationale and registrar checkout verification before any domain can be shortlisted.
 
 ---
 
@@ -11,7 +11,7 @@ SI Scout is an open-source, offline-first research workbench and heuristic scree
 | **A Heuristic Filter**: Reduces thousands of raw lexical combinations down to a manageable shortlist based on length, brand collisions, and dictionary checks. | **Not an Appraisal Tool**: It does not forecast, calculate, or predict secondary market resale value or appreciation. |
 | **An Offline-First Workbench**: Runs locally on `127.0.0.1` with zero remote telemetry, no external CDN dependencies, and synthetic demo fixtures. | **Not a Purchasing Bot**: It contains zero automated checkout bots, registrar cart automation, or payment integrations. |
 | **A Multi-Gate Verification System**: Enforces 6 mandatory screening gates, including self-written human rationales and manual registrar checkout calibration. | **Not an Auto-Registrar**: All transactions must be executed manually by a human operator on official registrar websites. |
-| **A Defensive Brand & Research Scanner**: Cross-references against the Tranco Top 100k to prevent trademark collisions and bad-faith registrations. | **Not Investment Advice**: Domain names are speculative and illiquid; domain-investing guides about curated .com portfolios (for example the Namecheap and Name.com guides) cite annual sell-through rates around 1–3% (not .si data), and expected value is negative. |
+| **A Defensive Brand & Research Scanner**: Flags labels that match popular websites. Tranco is a popularity ranking, not a trademark database. | **Not Investment Advice**: Domain names are speculative and illiquid; domain-investing guides about curated .com portfolios (for example the Namecheap and Name.com guides) cite annual sell-through rates around 1–3% (not .si data), and expected value is negative. |
 
 ---
 
@@ -63,7 +63,7 @@ Explore the workbench completely offline in under five minutes using synthetic f
 ### Windows
 ```cmd
 # 1. Clone or navigate to the directory
-cd "si domain project"
+cd si-scout
 
 # 2. Run the one-click demo launcher
 run_demo.bat
@@ -72,7 +72,7 @@ run_demo.bat
 ### macOS / Linux
 ```bash
 # 1. Clone or navigate to the directory
-cd "si-domain-project"
+cd si-scout
 
 # 2. Make executable and run demo launcher
 chmod +x run_demo.sh
@@ -85,13 +85,7 @@ A persistent banner (`Demo data. Not real registry results.`) will confirm you a
 
 ---
 
-## Screenshots
 
-| Findings & Attrition | Candidates Explorer | Registrar Calibration |
-| :---: | :---: | :---: |
-| ![Findings Screen](docs/img/findings.png)<br><sub>*Empirical screening funnel & velocity*</sub> | ![Candidates Screen](docs/img/candidates.png)<br><sub>*Screen 2: Multi-tier candidate filter*</sub> | ![Calibration Screen](docs/img/calibration.png)<br><sub>*Registrar-vs-registry checkout verification*</sub> |
-
-*(Place demo-mode screenshots in `docs/img/`)*
 
 ---
 
@@ -99,12 +93,12 @@ A persistent banner (`Demo data. Not real registry results.`) will confirm you a
 
 SI Scout rejects the concept of automated "buy recommendations." A candidate only advances through explicit sequential hurdles:
 
-1. **Gate 1: Authoritative RDAP Verification**: Domain must return an authoritative HTTP 404 (`not_found`) from `rdap.register.si`.
-2. **Gate 2: 3-Year Carry Budget Compliance**: Year 1 registration plus 2 years of renewal fees must fit within the capital ceiling (default: USD 200 total capital with a 10% reserve).
-3. **Gate 3: Reserved & Premium Exclusion**: Checks against Register.si restricted lists and known geographic/governmental reserved terms.
-4. **Gate 4: Twin Collision Clearance**: Evaluates `.com` and `.ai` counterparts. Active commercial `.com` sites trigger caution to prevent trademark infringement.
-5. **Gate 5: Human Rationale Gate**: Requires the operator to manually enter a minimum 15-word rationale in the format: *"A [type of organization] would use this because [functional purpose]."*. Auto-generated text is blocked.
-6. **Gate 6: Registrar Checkout Confirmation**: An operator must manually search the domain at an accredited registrar checkout within 60 minutes, recording the exact registrar, UTC timestamp, and observed availability.
+1. **Gate 1: Not in Registry**: The authoritative Register.si RDAP query returned HTTP 404 (`not_found`). Note: this only proves no active delegation record exists; it does not verify registrar retail availability.
+2. **Gate 2: Fresh Prices (7 Days)**: Active registrar fee snapshots must be verified within the past 7 days. Stale price quotes block candidate status to prevent hidden renewal fee inflation.
+3. **Gate 3: Fresh Check (60 Minutes)**: A domain check timestamp older than 60 minutes is considered stale for evaluation decisions. Competing registrations require recent verification.
+4. **Gate 4: Human Rationale (15 Words)**: Requires a human operator to enter a specific justification sentence (>= 15 words) and confirm human authorship. Auto-generated rationale is blocked.
+5. **Gate 5: Budget Fit**: Total carry costs (registration plus renewals across planned holding years) must fit within the user's allocated budget ceiling after reserve deductions.
+6. **Gate 6: Registrar Checkout Confirmation (60 Minutes)**: A human operator must manually test the domain in an accredited registrar's shopping cart within 60 minutes, recording the exact registrar, UTC timestamp, and observed availability.
 
 ### Calibration Screen
 To measure the gap between registry 404 responses and true registrar checkout availability (e.g. premium pricing, registry sync delays), the **Calibration Screen** tracks empirical agreement rates. If fewer than 10 manual comparisons exist, a warning is prominently displayed.
